@@ -19,7 +19,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
@@ -47,6 +47,15 @@ class DatabaseHelper {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         item TEXT NOT NULL,
         cost REAL NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE reviews (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        restaurantId INTEGER NOT NULL,
+        rating INTEGER NOT NULL,
+        comment TEXT NOT NULL
       )
     ''');
 
@@ -83,6 +92,18 @@ class DatabaseHelper {
       'item': 'Subway Combo',
       'cost': 11.25,
     });
+
+    await db.insert('reviews', {
+      'restaurantId': 1,
+      'rating': 5,
+      'comment': 'Great chicken sandwich and fast service.',
+    });
+
+    await db.insert('reviews', {
+      'restaurantId': 2,
+      'rating': 4,
+      'comment': 'Solid portions and decent value.',
+    });
   }
 
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
@@ -101,6 +122,17 @@ class DatabaseHelper {
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           item TEXT NOT NULL,
           cost REAL NOT NULL
+        )
+      ''');
+    }
+
+    if (oldVersion < 4) {
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS reviews (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          restaurantId INTEGER NOT NULL,
+          rating INTEGER NOT NULL,
+          comment TEXT NOT NULL
         )
       ''');
     }
@@ -131,6 +163,12 @@ class DatabaseHelper {
 
     await db.delete(
       'favorites',
+      where: 'restaurantId = ?',
+      whereArgs: [id],
+    );
+
+    await db.delete(
+      'reviews',
       where: 'restaurantId = ?',
       whereArgs: [id],
     );
@@ -205,5 +243,22 @@ class DatabaseHelper {
     final value = result.first['total'];
     if (value == null) return 0.0;
     return (value as num).toDouble();
+  }
+
+  Future<int> insertReview(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    return await db.insert('reviews', row);
+  }
+
+  Future<List<Map<String, dynamic>>> getReviewsForRestaurant(
+    int restaurantId,
+  ) async {
+    final db = await instance.database;
+    return await db.query(
+      'reviews',
+      where: 'restaurantId = ?',
+      whereArgs: [restaurantId],
+      orderBy: 'id DESC',
+    );
   }
 }

@@ -540,11 +540,13 @@ class RestaurantDetailsScreen extends StatefulWidget {
 
 class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
   bool isFav = false;
+  late Future<List<Map<String, dynamic>>> _reviewsFuture;
 
   @override
   void initState() {
     super.initState();
     _loadFavorite();
+    _loadReviews();
   }
 
   Future<void> _loadFavorite() async {
@@ -552,6 +554,16 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     if (!mounted) return;
     setState(() {
       isFav = fav;
+    });
+  }
+
+  void _loadReviews() {
+    _reviewsFuture = DatabaseHelper.instance.getReviewsForRestaurant(widget.id);
+  }
+
+  Future<void> _refreshReviews() async {
+    setState(() {
+      _loadReviews();
     });
   }
 
@@ -567,6 +579,29 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
           isFav
               ? '${widget.name} added to favorites'
               : '${widget.name} removed from favorites',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _goToAddReview() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddReviewScreen(restaurantId: widget.id),
+      ),
+    );
+    await _refreshReviews();
+  }
+
+  Widget _buildStarRow(int rating) {
+    return Row(
+      children: List.generate(
+        5,
+        (index) => Icon(
+          index < rating ? Icons.star : Icons.star_border,
+          color: Colors.amber,
+          size: 18,
         ),
       ),
     );
@@ -610,16 +645,58 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
             ),
             const SizedBox(height: 10),
             ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AddReviewScreen(),
-                  ),
-                );
-              },
+              onPressed: _goToAddReview,
               icon: const Icon(Icons.rate_review),
               label: const Text("Add Review"),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              "Reviews",
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _reviewsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final reviews = snapshot.data ?? [];
+
+                  if (reviews.isEmpty) {
+                    return const Center(
+                      child: Text('No reviews yet'),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: reviews.length,
+                    itemBuilder: (_, i) {
+                      final review = reviews[i];
+
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildStarRow(review['rating']),
+                              const SizedBox(height: 8),
+                              Text(review['comment']),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -630,26 +707,120 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
 // ================= ADD REVIEW =================
 
-class AddReviewScreen extends StatelessWidget {
-  const AddReviewScreen({super.key});
+class AddReviewScreen extends StatefulWidget {
+  final int restaurantId;
+
+  const AddReviewScreen({super.key, required this.restaurantId});
+
+  @override
+  State<AddReviewScreen> createState() => _AddReviewScreenState();
+}
+
+class _AddReviewScreenState extends State<AddReviewScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _commentController = TextEditingController();
+  int _selectedRating = 5;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveReview() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    await DatabaseHelper.instance.insertReview({
+      'restaurantId': widget.restaurantId,
+      'rating': _selectedRating,
+      'comment': _commentController.text.trim(),
+    });
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Review added successfully')),
+    );
+
+    Navigator.pop(context);
+  }
+
+  Widget _buildRatingSelector() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(
+        5,
+        (index) {
+          final starValue = index + 1;
+          return IconButton(
+            onPressed: () {
+              setState(() {
+                _selectedRating = starValue;
+              });
+            },
+            icon: Icon(
+              starValue <= _selectedRating ? Icons.star : Icons.star_border,
+              color: Colors.amber,
+              size: 32,
+            ),
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Add Review")),
-      body: Padding(
+      appBar: AppBar(
+        title: const Text("Add Review"),
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: const [
-            TextField(
-              decoration: InputDecoration(labelText: "Your Review"),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const Text(
+                    'Select a Rating',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildRatingSelector(),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _commentController,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: 'Review Comment',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a review comment';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveReview,
+                      icon: const Icon(Icons.save),
+                      label: const Text('Save Review'),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: null,
-              child: Text("Submit (Coming Soon)"),
-            ),
-          ],
+          ),
         ),
       ),
     );
