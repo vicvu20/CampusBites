@@ -44,7 +44,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const HomeDashboardScreen()),
+        MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
       );
     });
   }
@@ -78,7 +78,10 @@ class _SplashScreenState extends State<SplashScreen> {
             SizedBox(height: 10),
             Text(
               'Smart Food & Budget Tracker',
-              style: TextStyle(fontSize: 18, color: Colors.white70),
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.white70,
+              ),
             ),
             SizedBox(height: 30),
             CircularProgressIndicator(color: Colors.white),
@@ -252,15 +255,39 @@ class _FoodListScreenState extends State<FoodListScreen> {
     _restaurantsFuture = DatabaseHelper.instance.getRestaurants();
   }
 
+  void _refreshRestaurants() {
+    setState(() {
+      _loadRestaurants();
+    });
+  }
+
   Future<void> _goToAddRestaurant() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const AddRestaurantScreen()),
     );
+    _refreshRestaurants();
+  }
 
-    setState(() {
-      _loadRestaurants();
-    });
+  Future<void> _goToEditRestaurant(Map<String, dynamic> restaurant) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddRestaurantScreen(existingData: restaurant),
+      ),
+    );
+    _refreshRestaurants();
+  }
+
+  Future<void> _deleteRestaurant(Map<String, dynamic> restaurant) async {
+    await DatabaseHelper.instance.deleteRestaurant(restaurant['id']);
+    _refreshRestaurants();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${restaurant['name']} deleted')),
+    );
   }
 
   @override
@@ -303,25 +330,45 @@ class _FoodListScreenState extends State<FoodListScreen> {
             itemBuilder: (context, index) {
               final r = restaurants[index];
 
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: const Icon(Icons.restaurant),
-                  title: Text(r['name']),
-                  subtitle: Text('${r['type']} • ${r['price']}'),
-                  trailing: const Icon(Icons.arrow_forward),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => RestaurantDetailsScreen(
-                          name: r['name'],
-                          type: r['type'],
-                          price: r['price'],
+              return Dismissible(
+                key: Key(r['id'].toString()),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.delete,
+                    color: Colors.white,
+                  ),
+                ),
+                onDismissed: (_) => _deleteRestaurant(r),
+                child: Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    leading: const Icon(Icons.restaurant),
+                    title: Text(r['name']),
+                    subtitle: Text('${r['type']} • ${r['price']}'),
+                    trailing: const Icon(Icons.edit),
+                    onTap: () async {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RestaurantDetailsScreen(
+                            id: r['id'],
+                            name: r['name'],
+                            type: r['type'],
+                            price: r['price'],
+                            onEdit: () => _goToEditRestaurant(r),
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               );
             },
@@ -332,10 +379,12 @@ class _FoodListScreenState extends State<FoodListScreen> {
   }
 }
 
-// ================= ADD RESTAURANT =================
+// ================= ADD / EDIT RESTAURANT =================
 
 class AddRestaurantScreen extends StatefulWidget {
-  const AddRestaurantScreen({super.key});
+  final Map<String, dynamic>? existingData;
+
+  const AddRestaurantScreen({super.key, this.existingData});
 
   @override
   State<AddRestaurantScreen> createState() => _AddRestaurantScreenState();
@@ -348,6 +397,17 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
   String _selectedPrice = '\$';
 
   @override
+  void initState() {
+    super.initState();
+
+    if (widget.existingData != null) {
+      _nameController.text = widget.existingData!['name'];
+      _typeController.text = widget.existingData!['type'];
+      _selectedPrice = widget.existingData!['price'];
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _typeController.dispose();
@@ -357,26 +417,41 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
   Future<void> _saveRestaurant() async {
     if (!_formKey.currentState!.validate()) return;
 
-    await DatabaseHelper.instance.insertRestaurant({
-      'name': _nameController.text.trim(),
-      'type': _typeController.text.trim(),
-      'price': _selectedPrice,
-    });
+    if (widget.existingData == null) {
+      await DatabaseHelper.instance.insertRestaurant({
+        'name': _nameController.text.trim(),
+        'type': _typeController.text.trim(),
+        'price': _selectedPrice,
+      });
 
-    if (!mounted) return;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Restaurant added successfully')),
+      );
+    } else {
+      await DatabaseHelper.instance.updateRestaurant({
+        'id': widget.existingData!['id'],
+        'name': _nameController.text.trim(),
+        'type': _typeController.text.trim(),
+        'price': _selectedPrice,
+      });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Restaurant added successfully')),
-    );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Restaurant updated successfully')),
+      );
+    }
 
     Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
+    final isEditing = widget.existingData != null;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add Restaurant'),
+        title: Text(isEditing ? 'Edit Restaurant' : 'Add Restaurant'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -438,7 +513,9 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _saveRestaurant,
                       icon: const Icon(Icons.save),
-                      label: const Text('Save Restaurant'),
+                      label: Text(
+                        isEditing ? 'Update Restaurant' : 'Save Restaurant',
+                      ),
                     ),
                   ),
                 ],
@@ -454,15 +531,19 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
 // ================= RESTAURANT DETAILS =================
 
 class RestaurantDetailsScreen extends StatelessWidget {
+  final int id;
   final String name;
   final String type;
   final String price;
+  final VoidCallback onEdit;
 
   const RestaurantDetailsScreen({
     super.key,
+    required this.id,
     required this.name,
     required this.type,
     required this.price,
+    required this.onEdit,
   });
 
   @override
@@ -470,6 +551,16 @@ class RestaurantDetailsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(name),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              onEdit();
+            },
+            icon: const Icon(Icons.edit),
+            tooltip: 'Edit Restaurant',
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

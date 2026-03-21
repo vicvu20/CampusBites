@@ -51,12 +51,6 @@ class DatabaseHelper {
       'type': 'Sandwiches',
       'price': '\$',
     });
-
-    await db.insert('restaurants', {
-      'name': 'Cook Out',
-      'type': 'Burgers',
-      'price': '\$',
-    });
   }
 
   Future<List<Map<String, dynamic>>> getRestaurants() async {
@@ -67,5 +61,26 @@ class DatabaseHelper {
   Future<int> insertRestaurant(Map<String, dynamic> row) async {
     final db = await instance.database;
     return await db.insert('restaurants', row);
+  }
+
+  // ✅ UPDATE
+  Future<int> updateRestaurant(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    return await db.update(
+      'restaurants',
+      row,
+      where: 'id = ?',
+      whereArgs: [row['id']],
+    );
+  }
+
+  // ✅ DELETE
+  Future<int> deleteRestaurant(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'restaurants',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 }
