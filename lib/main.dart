@@ -109,7 +109,6 @@ class HomeDashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Budget Card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -132,16 +131,12 @@ class HomeDashboardScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 20),
-
             const Text(
               "Quick Actions",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 10),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -165,16 +160,12 @@ class HomeDashboardScreen extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 30),
-
             const Text(
               "Recommended for You",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 10),
-
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -353,8 +344,8 @@ class _FoodListScreenState extends State<FoodListScreen> {
                     leading: const Icon(Icons.restaurant),
                     title: Text(r['name']),
                     subtitle: Text('${r['type']} • ${r['price']}'),
-                    trailing: const Icon(Icons.edit),
-                    onTap: () async {
+                    trailing: const Icon(Icons.arrow_forward),
+                    onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -366,7 +357,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                             onEdit: () => _goToEditRestaurant(r),
                           ),
                         ),
-                      );
+                      ).then((_) => _refreshRestaurants());
                     },
                   ),
                 ),
@@ -530,7 +521,7 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
 
 // ================= RESTAURANT DETAILS =================
 
-class RestaurantDetailsScreen extends StatelessWidget {
+class RestaurantDetailsScreen extends StatefulWidget {
   final int id;
   final String name;
   final String type;
@@ -547,15 +538,54 @@ class RestaurantDetailsScreen extends StatelessWidget {
   });
 
   @override
+  State<RestaurantDetailsScreen> createState() =>
+      _RestaurantDetailsScreenState();
+}
+
+class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
+  bool isFav = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorite();
+  }
+
+  Future<void> _loadFavorite() async {
+    final fav = await DatabaseHelper.instance.isFavorite(widget.id);
+    if (!mounted) return;
+    setState(() {
+      isFav = fav;
+    });
+  }
+
+  Future<void> _toggleFavorite() async {
+    await DatabaseHelper.instance.toggleFavorite(widget.id);
+    await _loadFavorite();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isFav
+              ? '${widget.name} added to favorites'
+              : '${widget.name} removed from favorites',
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(name),
+        title: Text(widget.name),
         actions: [
           IconButton(
             onPressed: () async {
               Navigator.pop(context);
-              onEdit();
+              widget.onEdit();
             },
             icon: const Icon(Icons.edit),
             tooltip: 'Edit Restaurant',
@@ -568,19 +598,19 @@ class RestaurantDetailsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              name,
+              widget.name,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 10),
-            Text("$type • $price"),
+            Text("${widget.type} • ${widget.price}"),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.favorite_border),
-              label: const Text("Add to Favorites"),
+              onPressed: _toggleFavorite,
+              icon: Icon(isFav ? Icons.favorite : Icons.favorite_border),
+              label: Text(isFav ? "Remove Favorite" : "Add to Favorites"),
             ),
             const SizedBox(height: 10),
             ElevatedButton.icon(
@@ -632,24 +662,55 @@ class AddReviewScreen extends StatelessWidget {
 
 // ================= FAVORITES =================
 
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final favorites = ["Chick-fil-A", "Cook Out"];
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
 
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  late Future<List<Map<String, dynamic>>> _favoritesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _favoritesFuture = DatabaseHelper.instance.getFavorites();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Favorites')),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: favorites.length,
-        itemBuilder: (_, i) {
-          return Card(
-            child: ListTile(
-              leading: const Icon(Icons.favorite, color: Colors.red),
-              title: Text(favorites[i]),
-            ),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _favoritesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final favorites = snapshot.data ?? [];
+
+          if (favorites.isEmpty) {
+            return const Center(
+              child: Text('No favorites yet'),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: favorites.length,
+            itemBuilder: (_, i) {
+              final r = favorites[i];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: ListTile(
+                  leading: const Icon(Icons.favorite, color: Colors.red),
+                  title: Text(r['name']),
+                  subtitle: Text('${r['type']} • ${r['price']}'),
+                ),
+              );
+            },
           );
         },
       ),
