@@ -720,16 +720,32 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
 // ================= BUDGET =================
 
-class BudgetTrackerScreen extends StatelessWidget {
+class BudgetTrackerScreen extends StatefulWidget {
   const BudgetTrackerScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final expenses = [
-      {"item": "Chick-fil-A Meal", "cost": "\$9"},
-      {"item": "Subway Combo", "cost": "\$11"},
-    ];
+  State<BudgetTrackerScreen> createState() => _BudgetTrackerScreenState();
+}
 
+class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
+  late Future<List<Map<String, dynamic>>> _expensesFuture;
+  double _total = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExpenses();
+  }
+
+  Future<void> _loadExpenses() async {
+    _expensesFuture = DatabaseHelper.instance.getExpenses();
+    _total = await DatabaseHelper.instance.getTotalExpenses();
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Budget Tracker')),
       body: Padding(
@@ -737,18 +753,19 @@ class BudgetTrackerScreen extends StatelessWidget {
         child: Column(
           children: [
             Container(
+              width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.green.shade100,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  Text("This Week's Spending"),
-                  SizedBox(height: 8),
+                  const Text("Total Spending"),
+                  const SizedBox(height: 8),
                   Text(
-                    "\$28 / \$100",
-                    style: TextStyle(
+                    "\$${_total.toStringAsFixed(2)}",
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
@@ -758,19 +775,42 @@ class BudgetTrackerScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Expanded(
-              child: ListView.builder(
-                itemCount: expenses.length,
-                itemBuilder: (_, i) {
-                  final e = expenses[i];
-                  return Card(
-                    child: ListTile(
-                      title: Text(e["item"]!),
-                      trailing: Text(e["cost"]!),
-                    ),
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _expensesFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final expenses = snapshot.data ?? [];
+
+                  if (expenses.isEmpty) {
+                    return const Center(
+                      child: Text("No expenses yet"),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: expenses.length,
+                    itemBuilder: (_, i) {
+                      final e = expenses[i];
+                      return Card(
+                        child: ListTile(
+                          leading: const Icon(Icons.attach_money),
+                          title: Text(e['item']),
+                          trailing: Text(
+                            "\$${(e['cost'] as num).toStringAsFixed(2)}",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
-            ),
+            )
           ],
         ),
       ),
