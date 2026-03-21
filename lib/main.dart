@@ -41,7 +41,6 @@ class _SplashScreenState extends State<SplashScreen> {
 
     Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
-
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeDashboardScreen()),
@@ -332,10 +331,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                     color: Colors.red,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
-                    Icons.delete,
-                    color: Colors.white,
-                  ),
+                  child: const Icon(Icons.delete, color: Colors.white),
                 ),
                 onDismissed: (_) => _deleteRestaurant(r),
                 child: Card(
@@ -718,7 +714,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 }
 
-// ================= BUDGET =================
+// ================= BUDGET TRACKER =================
 
 class BudgetTrackerScreen extends StatefulWidget {
   const BudgetTrackerScreen({super.key});
@@ -744,10 +740,22 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
     setState(() {});
   }
 
+  Future<void> _goToAddExpense() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddExpenseScreen()),
+    );
+    await _loadExpenses();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Budget Tracker')),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _goToAddExpense,
+        child: const Icon(Icons.add),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -812,6 +820,115 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
               ),
             )
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// ================= ADD EXPENSE =================
+
+class AddExpenseScreen extends StatefulWidget {
+  const AddExpenseScreen({super.key});
+
+  @override
+  State<AddExpenseScreen> createState() => _AddExpenseScreenState();
+}
+
+class _AddExpenseScreenState extends State<AddExpenseScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _itemController = TextEditingController();
+  final _costController = TextEditingController();
+
+  @override
+  void dispose() {
+    _itemController.dispose();
+    _costController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveExpense() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    await DatabaseHelper.instance.insertExpense({
+      'item': _itemController.text.trim(),
+      'cost': double.parse(_costController.text.trim()),
+    });
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Expense added successfully')),
+    );
+
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Add Expense'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _itemController,
+                    decoration: const InputDecoration(
+                      labelText: 'Expense Item',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter an expense item';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _costController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: 'Cost',
+                      border: OutlineInputBorder(),
+                      prefixText: '\$',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a cost';
+                      }
+
+                      final parsed = double.tryParse(value.trim());
+                      if (parsed == null || parsed < 0) {
+                        return 'Please enter a valid amount';
+                      }
+
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveExpense,
+                      icon: const Icon(Icons.save),
+                      label: const Text('Save Expense'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
