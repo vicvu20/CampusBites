@@ -1,6 +1,6 @@
 name: campus_bites
 description: CampusBites - Food finder and budget tracker for students
-publish_to: 'none' # Remove this line if you plan to publish
+publish_to: 'none'
 
 version: 1.0.0+1
 
@@ -10,18 +10,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # iOS style icons
   cupertino_icons: ^1.0.8
-
-  # SQLite database
   sqflite: ^2.3.3+1
   path: ^1.9.0
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^3.0.2
 
 flutter:

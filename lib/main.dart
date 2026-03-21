@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'database_helper.dart';
 
 void main() async {
@@ -19,8 +20,88 @@ class CampusBitesApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
         useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFFF8FAF8),
+        cardTheme: CardThemeData(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
       ),
       home: const SplashScreen(),
+    );
+  }
+}
+
+class AppSettings {
+  static const String weeklyBudgetKey = 'weekly_budget';
+
+  static Future<double> getWeeklyBudget() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble(weeklyBudgetKey) ?? 100.0;
+  }
+
+  static Future<void> setWeeklyBudget(double amount) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(weeklyBudgetKey, amount);
+  }
+}
+
+// ================= SHARED WIDGETS =================
+
+class SectionTitle extends StatelessWidget {
+  final String text;
+
+  const SectionTitle(this.text, {super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    );
+  }
+}
+
+class EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const EmptyState({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.black54),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -56,7 +137,7 @@ class _SplashScreenState extends State<SplashScreen> {
         padding: const EdgeInsets.all(24),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF4CAF50), Color(0xFF81C784)],
+            colors: [Color(0xFF43A047), Color(0xFF81C784)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -64,12 +145,12 @@ class _SplashScreenState extends State<SplashScreen> {
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.restaurant_menu, size: 90, color: Colors.white),
+            Icon(Icons.restaurant_menu, size: 96, color: Colors.white),
             SizedBox(height: 20),
             Text(
               'CampusBites',
               style: TextStyle(
-                fontSize: 32,
+                fontSize: 34,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -93,20 +174,64 @@ class _SplashScreenState extends State<SplashScreen> {
 
 // ================= HOME DASHBOARD =================
 
-class HomeDashboardScreen extends StatelessWidget {
+class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
 
   @override
+  State<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
+}
+
+class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
+  double _weeklyBudget = 100.0;
+  double _totalSpent = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    final budget = await AppSettings.getWeeklyBudget();
+    final total = await DatabaseHelper.instance.getTotalExpenses();
+
+    if (!mounted) return;
+    setState(() {
+      _weeklyBudget = budget;
+      _totalSpent = total;
+    });
+  }
+
+  Future<void> _goToSettings() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+    );
+    await _loadDashboardData();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final remaining = _weeklyBudget - _totalSpent;
+    final ratio =
+        _weeklyBudget > 0 ? (_totalSpent / _weeklyBudget).clamp(0.0, 1.0) : 0.0;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('CampusBites'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            onPressed: _goToSettings,
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: RefreshIndicator(
+        onRefresh: _loadDashboardData,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
           children: [
             Container(
               width: double.infinity,
@@ -115,27 +240,36 @@ class HomeDashboardScreen extends StatelessWidget {
                 color: Colors.green.shade100,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Weekly Budget"),
-                  SizedBox(height: 8),
+                  const Text("Weekly Budget"),
+                  const SizedBox(height: 8),
                   Text(
-                    "\$45 / \$100",
-                    style: TextStyle(
+                    "\$${_totalSpent.toStringAsFixed(2)} / \$${_weeklyBudget.toStringAsFixed(2)}",
+                    style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  const SizedBox(height: 10),
+                  LinearProgressIndicator(
+                    value: ratio,
+                    minHeight: 10,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    remaining >= 0
+                        ? "Remaining: \$${remaining.toStringAsFixed(2)}"
+                        : "Over budget by \$${remaining.abs().toStringAsFixed(2)}",
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              "Quick Actions",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
+            const SectionTitle("Quick Actions"),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -159,34 +293,50 @@ class HomeDashboardScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 30),
-            const Text(
-              "Recommended for You",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Chick-fil-A",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+            const SizedBox(height: 28),
+            const SectionTitle("Recommended for You"),
+            const SizedBox(height: 12),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade50,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.local_dining,
+                        color: Colors.green,
+                        size: 28,
+                      ),
                     ),
-                  ),
-                  SizedBox(height: 5),
-                  Text("\$ - Fast Food"),
-                  SizedBox(height: 5),
-                  Text("Based on your budget & preferences"),
-                ],
+                    const SizedBox(width: 14),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Chick-fil-A",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text("\$ • Fast Food"),
+                          SizedBox(height: 8),
+                          Text(
+                            "Recommended because it matches a lower-cost food option and fits a student budget well.",
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -205,19 +355,22 @@ class HomeDashboardScreen extends StatelessWidget {
       onTap: () {
         Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
       },
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.green,
-              borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        width: 100,
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: Colors.white),
             ),
-            child: Icon(icon, color: Colors.white),
-          ),
-          const SizedBox(height: 5),
-          Text(label),
-        ],
+            const SizedBox(height: 6),
+            Text(label, textAlign: TextAlign.center),
+          ],
+        ),
       ),
     );
   }
@@ -277,13 +430,14 @@ class _FoodListScreenState extends State<FoodListScreen> {
     _refreshRestaurants();
 
     if (!mounted) return;
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${restaurant['name']} deleted')),
     );
   }
 
-  List<Map<String, dynamic>> _applyFilters(List<Map<String, dynamic>> restaurants) {
+  List<Map<String, dynamic>> _applyFilters(
+    List<Map<String, dynamic>> restaurants,
+  ) {
     return restaurants.where((restaurant) {
       final matchesSearch = restaurant['name']
           .toString()
@@ -330,7 +484,9 @@ class _FoodListScreenState extends State<FoodListScreen> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String>(
-                  value: typeOptions.contains(_selectedType) ? _selectedType : 'All',
+                  value: typeOptions.contains(_selectedType)
+                      ? _selectedType
+                      : 'All',
                   decoration: const InputDecoration(
                     labelText: 'Cuisine',
                     border: OutlineInputBorder(),
@@ -399,9 +555,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
           }
 
           if (snapshot.hasError) {
-            return const Center(
-              child: Text('Error loading restaurants'),
-            );
+            return const Center(child: Text('Error loading restaurants'));
           }
 
           final restaurants = snapshot.data ?? [];
@@ -412,8 +566,11 @@ class _FoodListScreenState extends State<FoodListScreen> {
               _buildFilterSection(restaurants),
               Expanded(
                 child: filteredRestaurants.isEmpty
-                    ? const Center(
-                        child: Text('No restaurants match your search/filter'),
+                    ? const EmptyState(
+                        icon: Icons.search_off,
+                        title: 'No matching restaurants',
+                        subtitle:
+                            'Try changing your search or filter selections.',
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
@@ -426,19 +583,28 @@ class _FoodListScreenState extends State<FoodListScreen> {
                             direction: DismissDirection.endToStart,
                             background: Container(
                               alignment: Alignment.centerRight,
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
                               margin: const EdgeInsets.only(bottom: 12),
                               decoration: BoxDecoration(
                                 color: Colors.red,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.delete, color: Colors.white),
+                              child:
+                                  const Icon(Icons.delete, color: Colors.white),
                             ),
                             onDismissed: (_) => _deleteRestaurant(r),
                             child: Card(
                               margin: const EdgeInsets.only(bottom: 12),
                               child: ListTile(
-                                leading: const Icon(Icons.restaurant),
+                                leading: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Icon(Icons.restaurant),
+                                ),
                                 title: Text(r['name']),
                                 subtitle: Text('${r['type']} • ${r['price']}'),
                                 trailing: const Icon(Icons.arrow_forward),
@@ -676,7 +842,6 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     await _loadFavorite();
 
     if (!mounted) return;
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -742,25 +907,28 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
             const SizedBox(height: 10),
             Text("${widget.type} • ${widget.price}"),
             const SizedBox(height: 20),
-            ElevatedButton.icon(
-              onPressed: _toggleFavorite,
-              icon: Icon(isFav ? Icons.favorite : Icons.favorite_border),
-              label: Text(isFav ? "Remove Favorite" : "Add to Favorites"),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: _goToAddReview,
-              icon: const Icon(Icons.rate_review),
-              label: const Text("Add Review"),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _toggleFavorite,
+                    icon: Icon(isFav ? Icons.favorite : Icons.favorite_border),
+                    label:
+                        Text(isFav ? "Remove Favorite" : "Add to Favorites"),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _goToAddReview,
+                    icon: const Icon(Icons.rate_review),
+                    label: const Text("Add Review"),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
-            const Text(
-              "Reviews",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            const SectionTitle("Reviews"),
             const SizedBox(height: 10),
             Expanded(
               child: FutureBuilder<List<Map<String, dynamic>>>(
@@ -773,8 +941,10 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                   final reviews = snapshot.data ?? [];
 
                   if (reviews.isEmpty) {
-                    return const Center(
-                      child: Text('No reviews yet'),
+                    return const EmptyState(
+                      icon: Icons.reviews_outlined,
+                      title: 'No reviews yet',
+                      subtitle: 'Be the first to leave a review for this place.',
                     );
                   }
 
@@ -963,8 +1133,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           final favorites = snapshot.data ?? [];
 
           if (favorites.isEmpty) {
-            return const Center(
-              child: Text('No favorites yet'),
+            return const EmptyState(
+              icon: Icons.favorite_border,
+              title: 'No favorites yet',
+              subtitle: 'Save restaurants to quickly find them later.',
             );
           }
 
@@ -1001,6 +1173,7 @@ class BudgetTrackerScreen extends StatefulWidget {
 class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
   late Future<List<Map<String, dynamic>>> _expensesFuture;
   double _total = 0.0;
+  double _weeklyBudget = 100.0;
 
   @override
   void initState() {
@@ -1011,6 +1184,7 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
   Future<void> _loadExpenses() async {
     _expensesFuture = DatabaseHelper.instance.getExpenses();
     _total = await DatabaseHelper.instance.getTotalExpenses();
+    _weeklyBudget = await AppSettings.getWeeklyBudget();
     if (!mounted) return;
     setState(() {});
   }
@@ -1025,6 +1199,10 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final remaining = _weeklyBudget - _total;
+    final ratio =
+        _weeklyBudget > 0 ? (_total / _weeklyBudget).clamp(0.0, 1.0) : 0.0;
+
     return Scaffold(
       appBar: AppBar(title: const Text('Budget Tracker')),
       floatingActionButton: FloatingActionButton(
@@ -1044,14 +1222,26 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
               ),
               child: Column(
                 children: [
-                  const Text("Total Spending"),
+                  const Text("Weekly Budget Progress"),
                   const SizedBox(height: 8),
                   Text(
-                    "\$${_total.toStringAsFixed(2)}",
+                    "\$${_total.toStringAsFixed(2)} / \$${_weeklyBudget.toStringAsFixed(2)}",
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  const SizedBox(height: 10),
+                  LinearProgressIndicator(
+                    value: ratio,
+                    minHeight: 10,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    remaining >= 0
+                        ? "Remaining: \$${remaining.toStringAsFixed(2)}"
+                        : "Over budget by \$${remaining.abs().toStringAsFixed(2)}",
                   ),
                 ],
               ),
@@ -1068,8 +1258,10 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
                   final expenses = snapshot.data ?? [];
 
                   if (expenses.isEmpty) {
-                    return const Center(
-                      child: Text("No expenses yet"),
+                    return const EmptyState(
+                      icon: Icons.receipt_long_outlined,
+                      title: 'No expenses yet',
+                      subtitle: 'Tap the + button to add your first expense.',
                     );
                   }
 
@@ -1198,6 +1390,121 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                       onPressed: _saveExpense,
                       icon: const Icon(Icons.save),
                       label: const Text('Save Expense'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ================= SETTINGS =================
+
+class SettingsScreen extends StatefulWidget {
+  const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _budgetController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentBudget();
+  }
+
+  Future<void> _loadCurrentBudget() async {
+    final budget = await AppSettings.getWeeklyBudget();
+    _budgetController.text = budget.toStringAsFixed(2);
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _budgetController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveSettings() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final amount = double.parse(_budgetController.text.trim());
+    await AppSettings.setWeeklyBudget(amount);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Settings saved successfully')),
+    );
+
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Settings'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Weekly Budget Goal',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _budgetController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(
+                      labelText: 'Budget Amount',
+                      border: OutlineInputBorder(),
+                      prefixText: '\$',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a budget amount';
+                      }
+
+                      final parsed = double.tryParse(value.trim());
+                      if (parsed == null || parsed <= 0) {
+                        return 'Please enter a valid positive amount';
+                      }
+
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveSettings,
+                      icon: const Icon(Icons.save),
+                      label: const Text('Save Settings'),
                     ),
                   ),
                 ],

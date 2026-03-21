@@ -1,16 +1,31 @@
-# campusbites
+# CampusBites
 
-A new Flutter project.
+CampusBites is a Flutter mobile application that helps students discover food options, track meal expenses, save favorite restaurants, and leave reviews. The app is designed to work fully offline using SQLite and SharedPreferences.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- Browse restaurants
+- Add, edit, and delete restaurants
+- Search restaurants by name
+- Filter by cuisine and price
+- Save favorites
+- Add and view reviews
+- Track expenses
+- Set a weekly budget goal
+- Store settings locally
 
-A few resources to get you started if this is your first Flutter project:
+## Technologies Used
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Flutter
+- Dart
+- SQLite (`sqflite`)
+- SharedPreferences
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Setup Instructions
+
+1. Clone the repository
+2. Open the project in VS Code or Android Studio
+3. Run:
+
+```bash
+flutter pub get
