@@ -22,6 +22,8 @@ class CampusBitesApp extends StatelessWidget {
   }
 }
 
+// ================= SPLASH SCREEN =================
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -95,6 +97,8 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 }
 
+// ================= HOME DASHBOARD =================
+
 class HomeDashboardScreen extends StatelessWidget {
   const HomeDashboardScreen({super.key});
 
@@ -105,12 +109,123 @@ class HomeDashboardScreen extends StatelessWidget {
         title: const Text('CampusBites'),
         centerTitle: true,
       ),
-      body: const Center(
-        child: Text(
-          'Home Dashboard Coming Next',
-          style: TextStyle(fontSize: 20),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Budget Card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.shade100,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    "Weekly Budget",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "\$45 / \$100",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Quick Actions
+            const Text(
+              "Quick Actions",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+
+            const SizedBox(height: 10),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildActionButton(
+                  icon: Icons.restaurant,
+                  label: "Food",
+                ),
+                _buildActionButton(
+                  icon: Icons.favorite,
+                  label: "Favorites",
+                ),
+                _buildActionButton(
+                  icon: Icons.attach_money,
+                  label: "Budget",
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 30),
+
+            // Recommendation Section
+            const Text(
+              "Recommended for You",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+
+            const SizedBox(height: 10),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Chick-fil-A",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text("\$ - Fast Food"),
+                  SizedBox(height: 5),
+                  Text("Based on your budget & preferences"),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+  }) {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.green,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(icon, color: Colors.white),
+        ),
+        const SizedBox(height: 5),
+        Text(label),
+      ],
     );
   }
 }
