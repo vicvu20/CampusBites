@@ -234,6 +234,9 @@ class FoodListScreen extends StatefulWidget {
 
 class _FoodListScreenState extends State<FoodListScreen> {
   late Future<List<Map<String, dynamic>>> _restaurantsFuture;
+  String _searchText = '';
+  String _selectedType = 'All';
+  String _selectedPrice = 'All';
 
   @override
   void initState() {
@@ -280,6 +283,101 @@ class _FoodListScreenState extends State<FoodListScreen> {
     );
   }
 
+  List<Map<String, dynamic>> _applyFilters(List<Map<String, dynamic>> restaurants) {
+    return restaurants.where((restaurant) {
+      final matchesSearch = restaurant['name']
+          .toString()
+          .toLowerCase()
+          .contains(_searchText.toLowerCase());
+
+      final matchesType = _selectedType == 'All' ||
+          restaurant['type'].toString() == _selectedType;
+
+      final matchesPrice = _selectedPrice == 'All' ||
+          restaurant['price'].toString() == _selectedPrice;
+
+      return matchesSearch && matchesType && matchesPrice;
+    }).toList();
+  }
+
+  List<String> _extractTypes(List<Map<String, dynamic>> restaurants) {
+    final types = restaurants.map((r) => r['type'].toString()).toSet().toList();
+    types.sort();
+    return ['All', ...types];
+  }
+
+  Widget _buildFilterSection(List<Map<String, dynamic>> restaurants) {
+    final typeOptions = _extractTypes(restaurants);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: Column(
+        children: [
+          TextField(
+            decoration: const InputDecoration(
+              hintText: 'Search restaurants',
+              prefixIcon: Icon(Icons.search),
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (value) {
+              setState(() {
+                _searchText = value;
+              });
+            },
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: typeOptions.contains(_selectedType) ? _selectedType : 'All',
+                  decoration: const InputDecoration(
+                    labelText: 'Cuisine',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: typeOptions
+                      .map(
+                        (type) => DropdownMenuItem(
+                          value: type,
+                          child: Text(type),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedType = value!;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: _selectedPrice,
+                  decoration: const InputDecoration(
+                    labelText: 'Price',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'All', child: Text('All')),
+                    DropdownMenuItem(value: '\$', child: Text('\$')),
+                    DropdownMenuItem(value: '\$\$', child: Text('\$\$')),
+                    DropdownMenuItem(value: '\$\$\$', child: Text('\$\$\$')),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedPrice = value!;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -307,58 +405,64 @@ class _FoodListScreenState extends State<FoodListScreen> {
           }
 
           final restaurants = snapshot.data ?? [];
+          final filteredRestaurants = _applyFilters(restaurants);
 
-          if (restaurants.isEmpty) {
-            return const Center(
-              child: Text('No restaurants found'),
-            );
-          }
+          return Column(
+            children: [
+              _buildFilterSection(restaurants),
+              Expanded(
+                child: filteredRestaurants.isEmpty
+                    ? const Center(
+                        child: Text('No restaurants match your search/filter'),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: filteredRestaurants.length,
+                        itemBuilder: (context, index) {
+                          final r = filteredRestaurants[index];
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: restaurants.length,
-            itemBuilder: (context, index) {
-              final r = restaurants[index];
-
-              return Dismissible(
-                key: Key(r['id'].toString()),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.delete, color: Colors.white),
-                ),
-                onDismissed: (_) => _deleteRestaurant(r),
-                child: Card(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  child: ListTile(
-                    leading: const Icon(Icons.restaurant),
-                    title: Text(r['name']),
-                    subtitle: Text('${r['type']} • ${r['price']}'),
-                    trailing: const Icon(Icons.arrow_forward),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => RestaurantDetailsScreen(
-                            id: r['id'],
-                            name: r['name'],
-                            type: r['type'],
-                            price: r['price'],
-                            onEdit: () => _goToEditRestaurant(r),
-                          ),
-                        ),
-                      ).then((_) => _refreshRestaurants());
-                    },
-                  ),
-                ),
-              );
-            },
+                          return Dismissible(
+                            key: Key(r['id'].toString()),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              margin: const EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.delete, color: Colors.white),
+                            ),
+                            onDismissed: (_) => _deleteRestaurant(r),
+                            child: Card(
+                              margin: const EdgeInsets.only(bottom: 12),
+                              child: ListTile(
+                                leading: const Icon(Icons.restaurant),
+                                title: Text(r['name']),
+                                subtitle: Text('${r['type']} • ${r['price']}'),
+                                trailing: const Icon(Icons.arrow_forward),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => RestaurantDetailsScreen(
+                                        id: r['id'],
+                                        name: r['name'],
+                                        type: r['type'],
+                                        price: r['price'],
+                                        onEdit: () => _goToEditRestaurant(r),
+                                      ),
+                                    ),
+                                  ).then((_) => _refreshRestaurants());
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           );
         },
       ),
