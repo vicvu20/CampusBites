@@ -143,7 +143,6 @@ class HomeDashboardScreen extends StatelessWidget {
 
             const SizedBox(height: 20),
 
-            // Quick Actions
             const Text(
               "Quick Actions",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -155,23 +154,28 @@ class HomeDashboardScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildActionButton(
+                  context: context,
                   icon: Icons.restaurant,
                   label: "Food",
+                  destination: const FoodListScreen(),
                 ),
                 _buildActionButton(
+                  context: context,
                   icon: Icons.favorite,
                   label: "Favorites",
+                  destination: const FavoritesScreen(),
                 ),
                 _buildActionButton(
+                  context: context,
                   icon: Icons.attach_money,
                   label: "Budget",
+                  destination: const BudgetTrackerScreen(),
                 ),
               ],
             ),
 
             const SizedBox(height: 30),
 
-            // Recommendation Section
             const Text(
               "Recommended for You",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -210,22 +214,179 @@ class HomeDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildActionButton({
+    required BuildContext context,
     required IconData icon,
     required String label,
+    required Widget destination,
   }) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.green,
-            borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => destination),
+        );
+      },
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(icon, color: Colors.white),
           ),
-          child: Icon(icon, color: Colors.white),
+          const SizedBox(height: 5),
+          Text(label),
+        ],
+      ),
+    );
+  }
+}
+
+// ================= FOOD LIST SCREEN =================
+
+class FoodListScreen extends StatelessWidget {
+  const FoodListScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Map<String, String>> restaurants = [
+      {"name": "Chick-fil-A", "type": "Fast Food", "price": "\$"},
+      {"name": "Panda Express", "type": "Chinese", "price": "\$\$"},
+      {"name": "Subway", "type": "Sandwiches", "price": "\$"},
+      {"name": "Cook Out", "type": "Burgers", "price": "\$"},
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Food List'),
+        centerTitle: true,
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: restaurants.length,
+        itemBuilder: (context, index) {
+          final restaurant = restaurants[index];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: const Icon(Icons.restaurant),
+              title: Text(restaurant["name"]!),
+              subtitle: Text('${restaurant["type"]} • ${restaurant["price"]}'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ================= FAVORITES SCREEN =================
+
+class FavoritesScreen extends StatelessWidget {
+  const FavoritesScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final List<String> favorites = [
+      "Chick-fil-A",
+      "Cook Out",
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Favorites'),
+        centerTitle: true,
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: favorites.length,
+        itemBuilder: (context, index) {
+          return Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: const Icon(Icons.favorite, color: Colors.red),
+              title: Text(favorites[index]),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ================= BUDGET TRACKER SCREEN =================
+
+class BudgetTrackerScreen extends StatelessWidget {
+  const BudgetTrackerScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Map<String, String>> expenses = [
+      {"item": "Chick-fil-A Meal", "cost": "\$9"},
+      {"item": "Subway Combo", "cost": "\$11"},
+      {"item": "Cook Out Tray", "cost": "\$8"},
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Budget Tracker'),
+        centerTitle: true,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.green.shade100,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "This Week's Spending",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    "\$28 / \$100",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(
+              child: ListView.builder(
+                itemCount: expenses.length,
+                itemBuilder: (context, index) {
+                  final expense = expenses[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ListTile(
+                      leading: const Icon(Icons.attach_money),
+                      title: Text(expense["item"]!),
+                      trailing: Text(
+                        expense["cost"]!,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 5),
-        Text(label),
-      ],
+      ),
     );
   }
 }
