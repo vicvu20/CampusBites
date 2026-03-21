@@ -62,15 +62,10 @@ class _SplashScreenState extends State<SplashScreen> {
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.restaurant_menu,
-              size: 90,
-              color: Colors.white,
-            ),
+            Icon(Icons.restaurant_menu, size: 90, color: Colors.white),
             SizedBox(height: 20),
             Text(
               'CampusBites',
-              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
@@ -80,16 +75,10 @@ class _SplashScreenState extends State<SplashScreen> {
             SizedBox(height: 10),
             Text(
               'Smart Food & Budget Tracker',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                color: Colors.white70,
-              ),
+              style: TextStyle(fontSize: 18, color: Colors.white70),
             ),
             SizedBox(height: 30),
-            CircularProgressIndicator(
-              color: Colors.white,
-            ),
+            CircularProgressIndicator(color: Colors.white),
           ],
         ),
       ),
@@ -105,10 +94,7 @@ class HomeDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('CampusBites'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('CampusBites'), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -122,64 +108,41 @@ class HomeDashboardScreen extends StatelessWidget {
                 color: Colors.green.shade100,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    "Weekly Budget",
-                    style: TextStyle(fontSize: 16),
-                  ),
+                children: [
+                  Text("Weekly Budget"),
                   SizedBox(height: 8),
-                  Text(
-                    "\$45 / \$100",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text("\$45 / \$100",
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
 
             const SizedBox(height: 20),
 
-            const Text(
-              "Quick Actions",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text("Quick Actions",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
             const SizedBox(height: 10),
 
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildActionButton(
-                  context: context,
-                  icon: Icons.restaurant,
-                  label: "Food",
-                  destination: const FoodListScreen(),
-                ),
-                _buildActionButton(
-                  context: context,
-                  icon: Icons.favorite,
-                  label: "Favorites",
-                  destination: const FavoritesScreen(),
-                ),
-                _buildActionButton(
-                  context: context,
-                  icon: Icons.attach_money,
-                  label: "Budget",
-                  destination: const BudgetTrackerScreen(),
-                ),
+                _buildActionButton(context, Icons.restaurant, "Food",
+                    const FoodListScreen()),
+                _buildActionButton(context, Icons.favorite, "Favorites",
+                    const FavoritesScreen()),
+                _buildActionButton(context, Icons.attach_money, "Budget",
+                    const BudgetTrackerScreen()),
               ],
             ),
 
             const SizedBox(height: 30),
 
-            const Text(
-              "Recommended for You",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+            const Text("Recommended for You",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
 
             const SizedBox(height: 10),
 
@@ -193,13 +156,9 @@ class HomeDashboardScreen extends StatelessWidget {
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "Chick-fil-A",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text("Chick-fil-A",
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   SizedBox(height: 5),
                   Text("\$ - Fast Food"),
                   SizedBox(height: 5),
@@ -213,27 +172,20 @@ class HomeDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButton({
-    required BuildContext context,
-    required IconData icon,
-    required String label,
-    required Widget destination,
-  }) {
+  Widget _buildActionButton(
+      BuildContext context, IconData icon, String label, Widget screen) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => destination),
-        );
+            context, MaterialPageRoute(builder: (_) => screen));
       },
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.green,
-              borderRadius: BorderRadius.circular(16),
-            ),
+                color: Colors.green,
+                borderRadius: BorderRadius.circular(16)),
             child: Icon(icon, color: Colors.white),
           ),
           const SizedBox(height: 5),
@@ -244,37 +196,43 @@ class HomeDashboardScreen extends StatelessWidget {
   }
 }
 
-// ================= FOOD LIST SCREEN =================
+// ================= FOOD LIST =================
 
 class FoodListScreen extends StatelessWidget {
   const FoodListScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> restaurants = [
+    final restaurants = [
       {"name": "Chick-fil-A", "type": "Fast Food", "price": "\$"},
       {"name": "Panda Express", "type": "Chinese", "price": "\$\$"},
       {"name": "Subway", "type": "Sandwiches", "price": "\$"},
-      {"name": "Cook Out", "type": "Burgers", "price": "\$"},
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Food List'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Food List')),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: restaurants.length,
         itemBuilder: (context, index) {
-          final restaurant = restaurants[index];
+          final r = restaurants[index];
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
-              leading: const Icon(Icons.restaurant),
-              title: Text(restaurant["name"]!),
-              subtitle: Text('${restaurant["type"]} • ${restaurant["price"]}'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              title: Text(r["name"]!),
+              subtitle: Text("${r["type"]} • ${r["price"]}"),
+              trailing: const Icon(Icons.arrow_forward),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RestaurantDetailsScreen(
+                      name: r["name"]!,
+                      type: r["type"]!,
+                      price: r["price"]!,
+                    ),
+                  ),
+                );
+              },
             ),
           );
         },
@@ -283,32 +241,111 @@ class FoodListScreen extends StatelessWidget {
   }
 }
 
-// ================= FAVORITES SCREEN =================
+// ================= RESTAURANT DETAILS =================
+
+class RestaurantDetailsScreen extends StatelessWidget {
+  final String name;
+  final String type;
+  final String price;
+
+  const RestaurantDetailsScreen({
+    super.key,
+    required this.name,
+    required this.type,
+    required this.price,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(name),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(name,
+                style:
+                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            Text("$type • $price"),
+            const SizedBox(height: 20),
+
+            ElevatedButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.favorite_border),
+              label: const Text("Add to Favorites"),
+            ),
+
+            const SizedBox(height: 10),
+
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const AddReviewScreen()),
+                );
+              },
+              icon: const Icon(Icons.rate_review),
+              label: const Text("Add Review"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ================= ADD REVIEW =================
+
+class AddReviewScreen extends StatelessWidget {
+  const AddReviewScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text("Add Review")),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: const [
+            TextField(
+              decoration: InputDecoration(labelText: "Your Review"),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: null,
+              child: Text("Submit (Coming Soon)"),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ================= FAVORITES =================
 
 class FavoritesScreen extends StatelessWidget {
   const FavoritesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<String> favorites = [
-      "Chick-fil-A",
-      "Cook Out",
-    ];
+    final favorites = ["Chick-fil-A", "Cook Out"];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Favorites'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Favorites')),
       body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: favorites.length,
-        itemBuilder: (context, index) {
+        itemBuilder: (_, i) {
           return Card(
-            margin: const EdgeInsets.only(bottom: 12),
             child: ListTile(
               leading: const Icon(Icons.favorite, color: Colors.red),
-              title: Text(favorites[index]),
+              title: Text(favorites[i]),
             ),
           );
         },
@@ -317,50 +354,37 @@ class FavoritesScreen extends StatelessWidget {
   }
 }
 
-// ================= BUDGET TRACKER SCREEN =================
+// ================= BUDGET =================
 
 class BudgetTrackerScreen extends StatelessWidget {
   const BudgetTrackerScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final List<Map<String, String>> expenses = [
+    final expenses = [
       {"item": "Chick-fil-A Meal", "cost": "\$9"},
       {"item": "Subway Combo", "cost": "\$11"},
-      {"item": "Cook Out Tray", "cost": "\$8"},
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Budget Tracker'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Budget Tracker')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Container(
-              width: double.infinity,
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.green.shade100,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    "This Week's Spending",
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  Text("This Week's Spending"),
                   SizedBox(height: 8),
-                  Text(
-                    "\$28 / \$100",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  Text("\$28 / \$100",
+                      style:
+                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -368,22 +392,17 @@ class BudgetTrackerScreen extends StatelessWidget {
             Expanded(
               child: ListView.builder(
                 itemCount: expenses.length,
-                itemBuilder: (context, index) {
-                  final expense = expenses[index];
+                itemBuilder: (_, i) {
+                  final e = expenses[i];
                   return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
                     child: ListTile(
-                      leading: const Icon(Icons.attach_money),
-                      title: Text(expense["item"]!),
-                      trailing: Text(
-                        expense["cost"]!,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      title: Text(e["item"]!),
+                      trailing: Text(e["cost"]!),
                     ),
                   );
                 },
               ),
-            ),
+            )
           ],
         ),
       ),
