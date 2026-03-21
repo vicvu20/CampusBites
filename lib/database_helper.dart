@@ -63,4 +63,9 @@ class DatabaseHelper {
     final db = await instance.database;
     return await db.query('restaurants', orderBy: 'name ASC');
   }
+
+  Future<int> insertRestaurant(Map<String, dynamic> row) async {
+    final db = await instance.database;
+    return await db.insert('restaurants', row);
+  }
 }

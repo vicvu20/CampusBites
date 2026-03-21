@@ -97,12 +97,16 @@ class HomeDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('CampusBites'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('CampusBites'),
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Budget Card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -125,12 +129,16 @@ class HomeDashboardScreen extends StatelessWidget {
                 ],
               ),
             ),
+
             const SizedBox(height: 20),
+
             const Text(
               "Quick Actions",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+
             const SizedBox(height: 10),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -154,12 +162,16 @@ class HomeDashboardScreen extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 30),
+
             const Text(
               "Recommended for You",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+
             const SizedBox(height: 10),
+
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -233,7 +245,22 @@ class _FoodListScreenState extends State<FoodListScreen> {
   @override
   void initState() {
     super.initState();
+    _loadRestaurants();
+  }
+
+  void _loadRestaurants() {
     _restaurantsFuture = DatabaseHelper.instance.getRestaurants();
+  }
+
+  Future<void> _goToAddRestaurant() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const AddRestaurantScreen()),
+    );
+
+    setState(() {
+      _loadRestaurants();
+    });
   }
 
   @override
@@ -241,6 +268,13 @@ class _FoodListScreenState extends State<FoodListScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Food List'),
+        actions: [
+          IconButton(
+            onPressed: _goToAddRestaurant,
+            icon: const Icon(Icons.add),
+            tooltip: 'Add Restaurant',
+          ),
+        ],
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _restaurantsFuture,
@@ -270,6 +304,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
               final r = restaurants[index];
 
               return Card(
+                margin: const EdgeInsets.only(bottom: 12),
                 child: ListTile(
                   leading: const Icon(Icons.restaurant),
                   title: Text(r['name']),
@@ -292,6 +327,125 @@ class _FoodListScreenState extends State<FoodListScreen> {
             },
           );
         },
+      ),
+    );
+  }
+}
+
+// ================= ADD RESTAURANT =================
+
+class AddRestaurantScreen extends StatefulWidget {
+  const AddRestaurantScreen({super.key});
+
+  @override
+  State<AddRestaurantScreen> createState() => _AddRestaurantScreenState();
+}
+
+class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _typeController = TextEditingController();
+  String _selectedPrice = '\$';
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _typeController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveRestaurant() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    await DatabaseHelper.instance.insertRestaurant({
+      'name': _nameController.text.trim(),
+      'type': _typeController.text.trim(),
+      'price': _selectedPrice,
+    });
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Restaurant added successfully')),
+    );
+
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Add Restaurant'),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Restaurant Name',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a restaurant name';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _typeController,
+                    decoration: const InputDecoration(
+                      labelText: 'Cuisine / Type',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a cuisine or type';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _selectedPrice,
+                    decoration: const InputDecoration(
+                      labelText: 'Price Range',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: '\$', child: Text('\$')),
+                      DropdownMenuItem(value: '\$\$', child: Text('\$\$')),
+                      DropdownMenuItem(value: '\$\$\$', child: Text('\$\$\$')),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedPrice = value!;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _saveRestaurant,
+                      icon: const Icon(Icons.save),
+                      label: const Text('Save Restaurant'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
