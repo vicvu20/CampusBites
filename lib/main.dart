@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'database_helper.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await DatabaseHelper.instance.database;
   runApp(const CampusBitesApp());
 }
 
@@ -100,7 +103,6 @@ class HomeDashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Budget Card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -113,39 +115,51 @@ class HomeDashboardScreen extends StatelessWidget {
                 children: [
                   Text("Weekly Budget"),
                   SizedBox(height: 8),
-                  Text("\$45 / \$100",
-                      style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text(
+                    "\$45 / \$100",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
-
             const SizedBox(height: 20),
-
-            const Text("Quick Actions",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-
+            const Text(
+              "Quick Actions",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildActionButton(context, Icons.restaurant, "Food",
-                    const FoodListScreen()),
-                _buildActionButton(context, Icons.favorite, "Favorites",
-                    const FavoritesScreen()),
-                _buildActionButton(context, Icons.attach_money, "Budget",
-                    const BudgetTrackerScreen()),
+                _buildActionButton(
+                  context,
+                  Icons.restaurant,
+                  "Food",
+                  const FoodListScreen(),
+                ),
+                _buildActionButton(
+                  context,
+                  Icons.favorite,
+                  "Favorites",
+                  const FavoritesScreen(),
+                ),
+                _buildActionButton(
+                  context,
+                  Icons.attach_money,
+                  "Budget",
+                  const BudgetTrackerScreen(),
+                ),
               ],
             ),
-
             const SizedBox(height: 30),
-
-            const Text("Recommended for You",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-
+            const Text(
+              "Recommended for You",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 10),
-
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -156,9 +170,13 @@ class HomeDashboardScreen extends StatelessWidget {
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("Chick-fil-A",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(
+                    "Chick-fil-A",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   SizedBox(height: 5),
                   Text("\$ - Fast Food"),
                   SizedBox(height: 5),
@@ -173,19 +191,23 @@ class HomeDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildActionButton(
-      BuildContext context, IconData icon, String label, Widget screen) {
+    BuildContext context,
+    IconData icon,
+    String label,
+    Widget screen,
+  ) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(
-            context, MaterialPageRoute(builder: (_) => screen));
+        Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
       },
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.circular(16)),
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Icon(icon, color: Colors.white),
           ),
           const SizedBox(height: 5),
@@ -198,42 +220,76 @@ class HomeDashboardScreen extends StatelessWidget {
 
 // ================= FOOD LIST =================
 
-class FoodListScreen extends StatelessWidget {
+class FoodListScreen extends StatefulWidget {
   const FoodListScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final restaurants = [
-      {"name": "Chick-fil-A", "type": "Fast Food", "price": "\$"},
-      {"name": "Panda Express", "type": "Chinese", "price": "\$\$"},
-      {"name": "Subway", "type": "Sandwiches", "price": "\$"},
-    ];
+  State<FoodListScreen> createState() => _FoodListScreenState();
+}
 
+class _FoodListScreenState extends State<FoodListScreen> {
+  late Future<List<Map<String, dynamic>>> _restaurantsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _restaurantsFuture = DatabaseHelper.instance.getRestaurants();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Food List')),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: restaurants.length,
-        itemBuilder: (context, index) {
-          final r = restaurants[index];
-          return Card(
-            child: ListTile(
-              title: Text(r["name"]!),
-              subtitle: Text("${r["type"]} • ${r["price"]}"),
-              trailing: const Icon(Icons.arrow_forward),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => RestaurantDetailsScreen(
-                      name: r["name"]!,
-                      type: r["type"]!,
-                      price: r["price"]!,
-                    ),
-                  ),
-                );
-              },
-            ),
+      appBar: AppBar(
+        title: const Text('Food List'),
+      ),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _restaurantsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text('Error loading restaurants'),
+            );
+          }
+
+          final restaurants = snapshot.data ?? [];
+
+          if (restaurants.isEmpty) {
+            return const Center(
+              child: Text('No restaurants found'),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: restaurants.length,
+            itemBuilder: (context, index) {
+              final r = restaurants[index];
+
+              return Card(
+                child: ListTile(
+                  leading: const Icon(Icons.restaurant),
+                  title: Text(r['name']),
+                  subtitle: Text('${r['type']} • ${r['price']}'),
+                  trailing: const Icon(Icons.arrow_forward),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RestaurantDetailsScreen(
+                          name: r['name'],
+                          type: r['type'],
+                          price: r['price'],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           );
         },
       ),
@@ -266,27 +322,29 @@ class RestaurantDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(name,
-                style:
-                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(
+              name,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 10),
             Text("$type • $price"),
             const SizedBox(height: 20),
-
             ElevatedButton.icon(
               onPressed: () {},
               icon: const Icon(Icons.favorite_border),
               label: const Text("Add to Favorites"),
             ),
-
             const SizedBox(height: 10),
-
             ElevatedButton.icon(
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (_) => const AddReviewScreen()),
+                    builder: (_) => const AddReviewScreen(),
+                  ),
                 );
               },
               icon: const Icon(Icons.rate_review),
@@ -319,7 +377,7 @@ class AddReviewScreen extends StatelessWidget {
             ElevatedButton(
               onPressed: null,
               child: Text("Submit (Coming Soon)"),
-            )
+            ),
           ],
         ),
       ),
@@ -382,9 +440,13 @@ class BudgetTrackerScreen extends StatelessWidget {
                 children: [
                   Text("This Week's Spending"),
                   SizedBox(height: 8),
-                  Text("\$28 / \$100",
-                      style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  Text(
+                    "\$28 / \$100",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -402,7 +464,7 @@ class BudgetTrackerScreen extends StatelessWidget {
                   );
                 },
               ),
-            )
+            ),
           ],
         ),
       ),
