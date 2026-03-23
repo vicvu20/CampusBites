@@ -21,6 +21,13 @@ class CampusBitesApp extends StatelessWidget {
         primarySwatch: Colors.green,
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF8FAF8),
+        // Consistent AppBar styling across all screens (Update)
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF43A047),
+          foregroundColor: Colors.white,
+          centerTitle: true,
+          elevation: 2,
+        ),
         cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
@@ -83,21 +90,23 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
+            // Larger icon and improved spacing for empty state readability
+            Icon(icon, size: 72, color: Colors.grey.shade400),
+            const SizedBox(height: 20),
             Text(
               title,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
+                color: Colors.black87,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               subtitle,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.black54),
+              style: const TextStyle(color: Colors.black45, fontSize: 14),
             ),
           ],
         ),
@@ -161,6 +170,16 @@ class _SplashScreenState extends State<SplashScreen> {
               style: TextStyle(
                 fontSize: 18,
                 color: Colors.white70,
+                letterSpacing: 1.2, // Added letter spacing for polished look
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Eat smart. Spend less.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white54,
+                fontStyle: FontStyle.italic,
               ),
             ),
             SizedBox(height: 30),
@@ -274,8 +293,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   const SizedBox(height: 10),
                   LinearProgressIndicator(
                     value: ratio,
-                    minHeight: 10,
+                    minHeight: 12,
                     borderRadius: BorderRadius.circular(20),
+                    color: ratio >= 0.8 ? Colors.red : Colors.green, // Progress bar color changes to red when over 80% of budget used
+                    backgroundColor: Colors.green.shade100,
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -1517,14 +1538,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               key: _formKey,
               child: Column(
                 children: [
+                  // Header row with icon for weekly budget section
                   const Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Weekly Budget Goal',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.savings, color: Colors.green),
+                        SizedBox(width: 8),
+                        Text(
+                          'Weekly Budget Goal',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
