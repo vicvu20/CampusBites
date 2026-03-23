@@ -1118,6 +1118,12 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  // Helper text guides user on how to interact with star selector
+                  const Text(
+                    'Tap a star to set your rating',
+                    style: TextStyle(color: Colors.black45, fontSize: 13),
+                  ),
                   const SizedBox(height: 8),
                   _buildRatingSelector(),
                   const SizedBox(height: 16),
