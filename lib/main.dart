@@ -315,49 +315,59 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             const SizedBox(height: 28),
             const SectionTitle("Recommended for You"),
             const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(
-                        Icons.local_dining,
-                        color: Colors.green,
-                        size: 28,
-                      ),
+            //fallback message if none available
+            _recommendation == null
+                ? const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text('No restaurants available yet.'),
                     ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
+                  )
+                : Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "Chick-fil-A",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                          // Icon container for recommendation
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade50,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(
+                              Icons.local_dining,
+                              color: Colors.green,
+                              size: 28,
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text("\$ • Fast Food"),
-                          SizedBox(height: 8),
-                          Text(
-                            "Recommended because it matches a lower-cost food option and fits a student budget well.",
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Display recommended restaurant name dynamically
+                                Text(
+                                  _recommendation!['name'],
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text('${_recommendation!['price']} • ${_recommendation!['type']}'),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Recommended because it is a budget-friendly option that fits your weekly spending goal.',
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
           ],
         ),
       ),
