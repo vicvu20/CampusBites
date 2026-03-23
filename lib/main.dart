@@ -184,11 +184,30 @@ class HomeDashboardScreen extends StatefulWidget {
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   double _weeklyBudget = 100.0;
   double _totalSpent = 0.0;
+  
+  // Stores the recommended restaurant to display on the dashboard
+  Map<String, dynamic>? _recommendation;
 
-  @override
+  // Loads the most affordable restaurant from the database as a recommendation
+  Future<void> _loadRecommendation() async {
+    final restaurants = await DatabaseHelper.instance.getRestaurants();
+    if (restaurants.isEmpty) return;
+
+    // Filter for budget-friendly options first, fallback to first available
+    final affordable = restaurants.where((r) => r['price'] == '\$').toList();
+    final pick = affordable.isNotEmpty ? affordable.first : restaurants.first;
+
+    if (!mounted) return;
+    setState(() {
+      _recommendation = pick;
+    });
+  }
+
+@override
   void initState() {
     super.initState();
     _loadDashboardData();
+    _loadRecommendation(); // Load recommendation when dashboard opens
   }
 
   Future<void> _loadDashboardData() async {
@@ -296,49 +315,59 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             const SizedBox(height: 28),
             const SectionTitle("Recommended for You"),
             const SizedBox(height: 12),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(
-                        Icons.local_dining,
-                        color: Colors.green,
-                        size: 28,
-                      ),
+            //fallback message if none available
+            _recommendation == null
+                ? const Card(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Text('No restaurants available yet.'),
                     ),
-                    const SizedBox(width: 14),
-                    const Expanded(
-                      child: Column(
+                  )
+                : Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(18), // Increased padding for better spacing
+                      child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "Chick-fil-A",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                          // Icon container for recommendation
+                          Container(
+                            padding: const EdgeInsets.all(16), // Updated Icon
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade50,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(
+                              Icons.local_dining,
+                              color: Colors.green,
+                              size: 28,
                             ),
                           ),
-                          SizedBox(height: 4),
-                          Text("\$ • Fast Food"),
-                          SizedBox(height: 8),
-                          Text(
-                            "Recommended because it matches a lower-cost food option and fits a student budget well.",
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Display recommended restaurant name dynamically
+                                Text(
+                                  _recommendation!['name'],
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text('${_recommendation!['price']} • ${_recommendation!['type']}'),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'Recommended because it is a budget-friendly option that fits your weekly spending goal.',
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
           ],
         ),
       ),
