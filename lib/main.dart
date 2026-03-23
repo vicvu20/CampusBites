@@ -1120,12 +1120,15 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                   const SizedBox(height: 8),
                   _buildRatingSelector(),
                   const SizedBox(height: 16),
+                  // maxLength enables built-in character counter below the field (Update)
                   TextFormField(
                     controller: _commentController,
                     maxLines: 4,
+                    maxLength: 200,
                     decoration: const InputDecoration(
                       labelText: 'Review Comment',
                       border: OutlineInputBorder(),
+                      helperText: 'Share your experience',
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
