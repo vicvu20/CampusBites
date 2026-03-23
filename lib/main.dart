@@ -990,11 +990,12 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
                   final reviews = snapshot.data ?? [];
 
+                  // Improved empty state with clearer call to action for reviews (Update)
                   if (reviews.isEmpty) {
                     return const EmptyState(
-                      icon: Icons.reviews_outlined,
+                      icon: Icons.rate_review_outlined,
                       title: 'No reviews yet',
-                      subtitle: 'Be the first to leave a review for this place.',
+                      subtitle: 'Tap "Add Review" above to share your experience with this restaurant.',
                     );
                   }
 
@@ -1003,15 +1004,20 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     itemBuilder: (_, i) {
                       final review = reviews[i];
 
+                      // Card styled with light color background for visual separation
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
+                        color: Colors.green.shade50,
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildStarRow(review['rating']),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
+                              // Divider added for visual separation between rating and comment
+                              const Divider(thickness: 1),
+                              const SizedBox(height: 4),
                               Text(review['comment']),
                             ],
                           ),
@@ -1115,15 +1121,24 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const SizedBox(height: 4),
+                  // Helper text guides user on how to interact with star selector
+                  const Text(
+                    'Tap a star to set your rating',
+                    style: TextStyle(color: Colors.black45, fontSize: 13),
+                  ),
                   const SizedBox(height: 8),
                   _buildRatingSelector(),
                   const SizedBox(height: 16),
+                  // maxLength enables built-in character counter below the field (Update)
                   TextFormField(
                     controller: _commentController,
                     maxLines: 4,
+                    maxLength: 200,
                     decoration: const InputDecoration(
                       labelText: 'Review Comment',
                       border: OutlineInputBorder(),
+                      helperText: 'Share your experience',
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
