@@ -1196,10 +1196,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           final favorites = snapshot.data ?? [];
 
           if (favorites.isEmpty) {
+            // Improved empty state with more helpful guidance for the user
             return const EmptyState(
               icon: Icons.favorite_border,
               title: 'No favorites yet',
-              subtitle: 'Save restaurants to quickly find them later.',
+              subtitle: 'Browse the food list and tap a restaurant to save it as a favorite.',
             );
           }
 
