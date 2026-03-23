@@ -21,6 +21,13 @@ class CampusBitesApp extends StatelessWidget {
         primarySwatch: Colors.green,
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF8FAF8),
+        // Consistent AppBar styling across all screens (Update)
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF43A047),
+          foregroundColor: Colors.white,
+          centerTitle: true,
+          elevation: 2,
+        ),
         cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
@@ -161,6 +168,16 @@ class _SplashScreenState extends State<SplashScreen> {
               style: TextStyle(
                 fontSize: 18,
                 color: Colors.white70,
+                letterSpacing: 1.2, // Added letter spacing for polished look
+              ),
+            ),
+            SizedBox(height: 10),
+            Text(
+              'Eat smart. Spend less.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white54,
+                fontStyle: FontStyle.italic,
               ),
             ),
             SizedBox(height: 30),
