@@ -291,8 +291,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   const SizedBox(height: 10),
                   LinearProgressIndicator(
                     value: ratio,
-                    minHeight: 10,
+                    minHeight: 12,
                     borderRadius: BorderRadius.circular(20),
+                    color: ratio >= 0.8 ? Colors.red : Colors.green, // Progress bar color changes to red when over 80% of budget used
+                    backgroundColor: Colors.green.shade100,
                   ),
                   const SizedBox(height: 10),
                   Text(
