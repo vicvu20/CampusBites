@@ -325,13 +325,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   )
                 : Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(18), // Increased padding for better spacing
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Icon container for recommendation
                           Container(
-                            padding: const EdgeInsets.all(14),
+                            padding: const EdgeInsets.all(16), // Updated Icon
                             decoration: BoxDecoration(
                               color: Colors.green.shade50,
                               borderRadius: BorderRadius.circular(14),
