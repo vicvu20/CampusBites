@@ -261,4 +261,13 @@ class DatabaseHelper {
       orderBy: 'id DESC',
     );
   }
+  // Delete a single expense record by its ID
+  Future<int> deleteExpense(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'expenses',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
 }
