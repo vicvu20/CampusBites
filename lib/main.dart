@@ -1298,14 +1298,38 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
                     itemCount: expenses.length,
                     itemBuilder: (_, i) {
                       final e = expenses[i];
-                      return Card(
-                        child: ListTile(
-                          leading: const Icon(Icons.attach_money),
-                          title: Text(e['item']),
-                          trailing: Text(
-                            "\$${(e['cost'] as num).toStringAsFixed(2)}",
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
+                      // Wrap in Dismissible to enable swipe-to-delete
+                      return Dismissible(
+                        key: Key(e['id'].toString()),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(Icons.delete, color: Colors.white),
+                        ),
+                        onDismissed: (_) async {
+                          // Delete expense from database on swipe
+                          await DatabaseHelper.instance.deleteExpense(e['id']);
+                          setState(() {});
+                          // Notify user that expense was removed
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('${e['item']} removed')),
+                          );
+                        },
+                        child: Card(
+                          child: ListTile(
+                            leading: const Icon(Icons.attach_money),
+                            title: Text(e['item']),
+                            trailing: Text(
+                              "\$${(e['cost'] as num).toStringAsFixed(2)}",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
