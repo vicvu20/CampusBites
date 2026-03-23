@@ -184,11 +184,30 @@ class HomeDashboardScreen extends StatefulWidget {
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   double _weeklyBudget = 100.0;
   double _totalSpent = 0.0;
+  
+  // Stores the recommended restaurant to display on the dashboard
+  Map<String, dynamic>? _recommendation;
 
-  @override
+  // Loads the most affordable restaurant from the database as a recommendation
+  Future<void> _loadRecommendation() async {
+    final restaurants = await DatabaseHelper.instance.getRestaurants();
+    if (restaurants.isEmpty) return;
+
+    // Filter for budget-friendly options first, fallback to first available
+    final affordable = restaurants.where((r) => r['price'] == '\$').toList();
+    final pick = affordable.isNotEmpty ? affordable.first : restaurants.first;
+
+    if (!mounted) return;
+    setState(() {
+      _recommendation = pick;
+    });
+  }
+
+@override
   void initState() {
     super.initState();
     _loadDashboardData();
+    _loadRecommendation(); // Load recommendation when dashboard opens
   }
 
   Future<void> _loadDashboardData() async {
