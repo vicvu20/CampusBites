@@ -1187,7 +1187,26 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Favorites')),
+      appBar: AppBar(
+        // Title dynamically shows count of favorited restaurants
+        title: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _favoritesFuture,
+          builder: (context, snapshot) {
+            final count = snapshot.data?.length ?? 0;
+            return Text('Favorites (${count})');
+          },
+        ),
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(24),
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: Text(
+              'Your saved restaurants',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+          ),
+        ),
+      ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _favoritesFuture,
         builder: (context, snapshot) {
@@ -1198,10 +1217,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           final favorites = snapshot.data ?? [];
 
           if (favorites.isEmpty) {
+            // Improved empty state with more helpful guidance for the user
             return const EmptyState(
               icon: Icons.favorite_border,
               title: 'No favorites yet',
-              subtitle: 'Save restaurants to quickly find them later.',
+              subtitle: 'Browse the food list and tap a restaurant to save it as a favorite.',
             );
           }
 
@@ -1215,6 +1235,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 child: ListTile(
                   leading: const Icon(Icons.favorite, color: Colors.red),
                   title: Text(r['name']),
+                  // Show cuisine and price as subtitle for quick reference
                   subtitle: Text('${r['type']} • ${r['price']}'),
                 ),
               );
