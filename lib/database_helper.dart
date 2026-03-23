@@ -1,31 +1,36 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+// Singleton class to manage a single database instance across the app
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
 
   DatabaseHelper._init();
 
+  // Lazy initialization: only create DB when first accessed
   Future<Database> get database async {
     if (_database != null) return _database!;
     _database = await _initDB('campusbites.db');
     return _database!;
   }
 
+  // Initialize database and define version for upgrades
   Future<Database> _initDB(String filePath) async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
     return await openDatabase(
       path,
-      version: 4,
+      version: 4, // version used for schema updates
       onCreate: _createDB,
       onUpgrade: _upgradeDB,
     );
   }
 
+  // Create all tables and insert initial sample data
   Future<void> _createDB(Database db, int version) async {
+    // Stores restaurant information
     await db.execute('''
       CREATE TABLE restaurants (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -35,6 +40,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // Stores favorite restaurants (relationship table)
     await db.execute('''
       CREATE TABLE favorites (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,6 +48,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // Stores user spending data
     await db.execute('''
       CREATE TABLE expenses (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,6 +57,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // Stores user reviews for restaurants
     await db.execute('''
       CREATE TABLE reviews (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -59,6 +67,7 @@ class DatabaseHelper {
       )
     ''');
 
+    // Insert sample data for testing/demo purposes
     await db.insert('restaurants', {
       'name': 'Chick-fil-A',
       'type': 'Fast Food',
@@ -106,6 +115,7 @@ class DatabaseHelper {
     });
   }
 
+  // Handles schema updates when database version changes
   Future<void> _upgradeDB(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await db.execute('''
@@ -138,16 +148,19 @@ class DatabaseHelper {
     }
   }
 
+  // Retrieve all restaurants sorted alphabetically
   Future<List<Map<String, dynamic>>> getRestaurants() async {
     final db = await instance.database;
     return await db.query('restaurants', orderBy: 'name ASC');
   }
 
+  // Add new restaurant
   Future<int> insertRestaurant(Map<String, dynamic> row) async {
     final db = await instance.database;
     return await db.insert('restaurants', row);
   }
 
+  // Update existing restaurant by ID
   Future<int> updateRestaurant(Map<String, dynamic> row) async {
     final db = await instance.database;
     return await db.update(
@@ -158,6 +171,7 @@ class DatabaseHelper {
     );
   }
 
+  // Delete restaurant and related data (prevents orphan records)
   Future<int> deleteRestaurant(int id) async {
     final db = await instance.database;
 
@@ -180,6 +194,7 @@ class DatabaseHelper {
     );
   }
 
+  // Toggle favorite status (add/remove)
   Future<void> toggleFavorite(int restaurantId) async {
     final db = await instance.database;
 
@@ -200,6 +215,7 @@ class DatabaseHelper {
     }
   }
 
+  // Check if a restaurant is marked as favorite
   Future<bool> isFavorite(int restaurantId) async {
     final db = await instance.database;
 
@@ -212,6 +228,7 @@ class DatabaseHelper {
     return result.isNotEmpty;
   }
 
+  // Join query to retrieve full restaurant details for favorites
   Future<List<Map<String, dynamic>>> getFavorites() async {
     final db = await instance.database;
 
@@ -224,16 +241,19 @@ class DatabaseHelper {
     ''');
   }
 
+  // Add expense entry
   Future<int> insertExpense(Map<String, dynamic> row) async {
     final db = await instance.database;
     return await db.insert('expenses', row);
   }
 
+  // Retrieve all expenses (most recent first)
   Future<List<Map<String, dynamic>>> getExpenses() async {
     final db = await instance.database;
     return await db.query('expenses', orderBy: 'id DESC');
   }
 
+  // Calculate total spending using SQL aggregation
   Future<double> getTotalExpenses() async {
     final db = await instance.database;
     final result = await db.rawQuery(
@@ -245,11 +265,13 @@ class DatabaseHelper {
     return (value as num).toDouble();
   }
 
+  // Add review for a restaurant
   Future<int> insertReview(Map<String, dynamic> row) async {
     final db = await instance.database;
     return await db.insert('reviews', row);
   }
 
+  // Retrieve reviews for a specific restaurant
   Future<List<Map<String, dynamic>>> getReviewsForRestaurant(
     int restaurantId,
   ) async {
@@ -261,6 +283,7 @@ class DatabaseHelper {
       orderBy: 'id DESC',
     );
   }
+
   // Delete a single expense record by its ID
   Future<int> deleteExpense(int id) async {
     final db = await instance.database;
