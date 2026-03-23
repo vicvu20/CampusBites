@@ -1014,7 +1014,10 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _buildStarRow(review['rating']),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 6),
+                              // Divider added for visual separation between rating and comment
+                              const Divider(thickness: 1),
+                              const SizedBox(height: 4),
                               Text(review['comment']),
                             ],
                           ),
