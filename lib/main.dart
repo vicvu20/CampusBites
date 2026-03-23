@@ -1003,8 +1003,10 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     itemBuilder: (_, i) {
                       final review = reviews[i];
 
+                      // Card styled with light color background for visual separation
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
+                        color: Colors.green.shade50,
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: Column(
