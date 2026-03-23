@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'database_helper.dart';
 
+// App entry point — sets up the database before launching the app
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await DatabaseHelper.instance.database;
   runApp(const CampusBitesApp());
 }
 
+// Root widget — sets the app theme and starting screen
 class CampusBitesApp extends StatelessWidget {
   const CampusBitesApp({super.key});
 
@@ -17,17 +19,11 @@ class CampusBitesApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'CampusBites',
+      // App-wide green theme with rounded card style
       theme: ThemeData(
         primarySwatch: Colors.green,
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF8FAF8),
-        // Consistent AppBar styling across all screens (Update)
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF43A047),
-          foregroundColor: Colors.white,
-          centerTitle: true,
-          elevation: 2,
-        ),
         cardTheme: CardThemeData(
           elevation: 2,
           shape: RoundedRectangleBorder(
@@ -40,14 +36,17 @@ class CampusBitesApp extends StatelessWidget {
   }
 }
 
+// Handles saving and loading the weekly budget using local device storage
 class AppSettings {
   static const String weeklyBudgetKey = 'weekly_budget';
 
+  // Gets the saved budget, defaults to $100 if not set
   static Future<double> getWeeklyBudget() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getDouble(weeklyBudgetKey) ?? 100.0;
   }
 
+  // Saves the user's weekly budget to local storage
   static Future<void> setWeeklyBudget(double amount) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(weeklyBudgetKey, amount);
@@ -56,6 +55,7 @@ class AppSettings {
 
 // ================= SHARED WIDGETS =================
 
+// Reusable bold section title used across multiple screens
 class SectionTitle extends StatelessWidget {
   final String text;
 
@@ -70,6 +70,7 @@ class SectionTitle extends StatelessWidget {
   }
 }
 
+// Reusable empty state widget shown when a list has no items
 class EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -90,7 +91,6 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Larger icon and improved spacing for empty state readability
             Icon(icon, size: 72, color: Colors.grey.shade400),
             const SizedBox(height: 20),
             Text(
@@ -117,6 +117,7 @@ class EmptyState extends StatelessWidget {
 
 // ================= SPLASH SCREEN =================
 
+// First screen shown when the app opens — waits 2 seconds then goes to dashboard
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -128,7 +129,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-
+    // Wait 2 seconds then navigate to the home dashboard
     Timer(const Duration(seconds: 2), () {
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -144,6 +145,7 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(24),
+        // Green gradient background for the splash screen
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF43A047), Color(0xFF81C784)],
@@ -170,10 +172,11 @@ class _SplashScreenState extends State<SplashScreen> {
               style: TextStyle(
                 fontSize: 18,
                 color: Colors.white70,
-                letterSpacing: 1.2, // Added letter spacing for polished look
+                letterSpacing: 1.2,
               ),
             ),
             SizedBox(height: 10),
+            // Tagline shown below subtitle
             Text(
               'Eat smart. Spend less.',
               style: TextStyle(
@@ -193,6 +196,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
 // ================= HOME DASHBOARD =================
 
+// Main screen showing budget summary, quick actions, and a restaurant recommendation
 class HomeDashboardScreen extends StatefulWidget {
   const HomeDashboardScreen({super.key});
 
@@ -229,6 +233,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     _loadRecommendation(); // Load recommendation when dashboard opens
   }
 
+  // Loads the budget and total spending from storage and database
   Future<void> _loadDashboardData() async {
     final budget = await AppSettings.getWeeklyBudget();
     final total = await DatabaseHelper.instance.getTotalExpenses();
@@ -240,6 +245,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     });
   }
 
+  // Opens settings screen then refreshes dashboard data when returning
   Future<void> _goToSettings() async {
     await Navigator.push(
       context,
@@ -250,6 +256,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Calculate money left and progress bar ratio
     final remaining = _weeklyBudget - _totalSpent;
     final ratio =
         _weeklyBudget > 0 ? (_totalSpent / _weeklyBudget).clamp(0.0, 1.0) : 0.0;
@@ -266,11 +273,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           ),
         ],
       ),
+      // Pull down to refresh the dashboard
       body: RefreshIndicator(
         onRefresh: _loadDashboardData,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            // Budget summary card showing spent vs total
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -291,10 +300,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 10),
+                  // Progress bar fills as spending increases
                   LinearProgressIndicator(
                     value: ratio,
                     minHeight: 12,
                     borderRadius: BorderRadius.circular(20),
+<<<<<<< HEAD
+=======
+                    // Turns red when over 80% of budget is used
+>>>>>>> 887bc7f (Finalize comments update)
                     color: ratio >= 0.8 ? Colors.red : Colors.green,
                     backgroundColor: Colors.green.shade100,
                   ),
@@ -310,6 +324,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             const SizedBox(height: 20),
             const SectionTitle("Quick Actions"),
             const SizedBox(height: 12),
+            // Row of buttons to navigate to main app sections
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -336,6 +351,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             const SizedBox(height: 28),
             const SectionTitle("Recommended for You"),
             const SizedBox(height: 12),
+<<<<<<< HEAD
+=======
+            // Show dynamic recommendation or fallback message if none available
+>>>>>>> 887bc7f (Finalize comments update)
             _recommendation == null
                 ? const Card(
                     child: Padding(
@@ -349,6 +368,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+<<<<<<< HEAD
+=======
+                          // Icon container for the recommendation card
+>>>>>>> 887bc7f (Finalize comments update)
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
@@ -394,6 +417,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     );
   }
 
+  // Builds a tappable icon button that navigates to a given screen
   Widget _buildActionButton(
     BuildContext context,
     IconData icon,
@@ -427,6 +451,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
 // ================= FOOD LIST =================
 
+// Shows all restaurants with search and filter options
 class FoodListScreen extends StatefulWidget {
   const FoodListScreen({super.key});
 
@@ -446,16 +471,19 @@ class _FoodListScreenState extends State<FoodListScreen> {
     _loadRestaurants();
   }
 
+  // Fetches all restaurants from the database
   void _loadRestaurants() {
     _restaurantsFuture = DatabaseHelper.instance.getRestaurants();
   }
 
+  // Triggers a fresh load and rebuilds the list
   void _refreshRestaurants() {
     setState(() {
       _loadRestaurants();
     });
   }
 
+  // Opens the add restaurant screen, then refreshes the list
   Future<void> _goToAddRestaurant() async {
     await Navigator.push(
       context,
@@ -464,6 +492,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
     _refreshRestaurants();
   }
 
+  // Opens the edit screen with the selected restaurant's existing data
   Future<void> _goToEditRestaurant(Map<String, dynamic> restaurant) async {
     await Navigator.push(
       context,
@@ -474,6 +503,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
     _refreshRestaurants();
   }
 
+  // Deletes a restaurant from the database and refreshes the list
   Future<void> _deleteRestaurant(Map<String, dynamic> restaurant) async {
     await DatabaseHelper.instance.deleteRestaurant(restaurant['id']);
     _refreshRestaurants();
@@ -484,6 +514,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
     );
   }
 
+  // Filters the restaurant list by search text, cuisine type, and price
   List<Map<String, dynamic>> _applyFilters(
     List<Map<String, dynamic>> restaurants,
   ) {
@@ -503,12 +534,14 @@ class _FoodListScreenState extends State<FoodListScreen> {
     }).toList();
   }
 
+  // Pulls unique cuisine types from the list to populate the filter dropdown
   List<String> _extractTypes(List<Map<String, dynamic>> restaurants) {
     final types = restaurants.map((r) => r['type'].toString()).toSet().toList();
     types.sort();
     return ['All', ...types];
   }
 
+  // Builds the search bar and cuisine/price filter dropdowns
   Widget _buildFilterSection(List<Map<String, dynamic>> restaurants) {
     final typeOptions = _extractTypes(restaurants);
 
@@ -516,6 +549,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: Column(
         children: [
+          // Search bar filters list as user types
           TextField(
             decoration: const InputDecoration(
               hintText: 'Search restaurants',
@@ -531,6 +565,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
+              // Cuisine type filter dropdown
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: typeOptions.contains(_selectedType)
@@ -556,6 +591,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                 ),
               ),
               const SizedBox(width: 12),
+              // Price range filter dropdown
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: _selectedPrice,
@@ -627,6 +663,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                         itemBuilder: (context, index) {
                           final r = filteredRestaurants[index];
 
+                          // Swipe left on a card to delete the restaurant
                           return Dismissible(
                             key: Key(r['id'].toString()),
                             direction: DismissDirection.endToStart,
@@ -657,6 +694,7 @@ class _FoodListScreenState extends State<FoodListScreen> {
                                 title: Text(r['name']),
                                 subtitle: Text('${r['type']} • ${r['price']}'),
                                 trailing: const Icon(Icons.arrow_forward),
+                                // Tap to view restaurant details and reviews
                                 onTap: () {
                                   Navigator.push(
                                     context,
@@ -687,8 +725,9 @@ class _FoodListScreenState extends State<FoodListScreen> {
 
 // ================= ADD / EDIT RESTAURANT =================
 
+// Screen for adding a new restaurant or editing an existing one
 class AddRestaurantScreen extends StatefulWidget {
-  final Map<String, dynamic>? existingData;
+  final Map<String, dynamic>? existingData; // null means adding, not editing
 
   const AddRestaurantScreen({super.key, this.existingData});
 
@@ -705,7 +744,7 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
   @override
   void initState() {
     super.initState();
-
+    // Pre-fill fields if editing an existing restaurant
     if (widget.existingData != null) {
       _nameController.text = widget.existingData!['name'];
       _typeController.text = widget.existingData!['type'];
@@ -720,10 +759,12 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
     super.dispose();
   }
 
+  // Saves a new restaurant or updates an existing one in the database
   Future<void> _saveRestaurant() async {
     if (!_formKey.currentState!.validate()) return;
 
     if (widget.existingData == null) {
+      // Insert new restaurant
       await DatabaseHelper.instance.insertRestaurant({
         'name': _nameController.text.trim(),
         'type': _typeController.text.trim(),
@@ -735,6 +776,7 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
         const SnackBar(content: Text('Restaurant added successfully')),
       );
     } else {
+      // Update existing restaurant by ID
       await DatabaseHelper.instance.updateRestaurant({
         'id': widget.existingData!['id'],
         'name': _nameController.text.trim(),
@@ -768,6 +810,7 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
               key: _formKey,
               child: Column(
                 children: [
+                  // Restaurant name input
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
@@ -782,6 +825,7 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  // Cuisine type input
                   TextFormField(
                     controller: _typeController,
                     decoration: const InputDecoration(
@@ -796,6 +840,7 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  // Price range selector
                   DropdownButtonFormField<String>(
                     value: _selectedPrice,
                     decoration: const InputDecoration(
@@ -836,6 +881,7 @@ class _AddRestaurantScreenState extends State<AddRestaurantScreen> {
 
 // ================= RESTAURANT DETAILS =================
 
+// Shows full info for a restaurant including favorite toggle and reviews
 class RestaurantDetailsScreen extends StatefulWidget {
   final int id;
   final String name;
@@ -868,6 +914,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     _loadReviews();
   }
 
+  // Checks if this restaurant is saved as a favorite
   Future<void> _loadFavorite() async {
     final fav = await DatabaseHelper.instance.isFavorite(widget.id);
     if (!mounted) return;
@@ -876,16 +923,19 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     });
   }
 
+  // Loads reviews for this specific restaurant
   void _loadReviews() {
     _reviewsFuture = DatabaseHelper.instance.getReviewsForRestaurant(widget.id);
   }
 
+  // Refreshes the review list after a new review is added
   Future<void> _refreshReviews() async {
     setState(() {
       _loadReviews();
     });
   }
 
+  // Adds or removes this restaurant from favorites
   Future<void> _toggleFavorite() async {
     await DatabaseHelper.instance.toggleFavorite(widget.id);
     await _loadFavorite();
@@ -902,6 +952,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     );
   }
 
+  // Opens the add review screen for this restaurant
   Future<void> _goToAddReview() async {
     await Navigator.push(
       context,
@@ -912,6 +963,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
     await _refreshReviews();
   }
 
+  // Builds a row of star icons based on the rating value
   Widget _buildStarRow(int rating) {
     return Row(
       children: List.generate(
@@ -958,6 +1010,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
             const SizedBox(height: 20),
             Row(
               children: [
+                // Button to save or remove from favorites
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _toggleFavorite,
@@ -967,6 +1020,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
+                // Button to open the add review screen
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: _goToAddReview,
@@ -989,6 +1043,10 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
                   final reviews = snapshot.data ?? [];
 
+<<<<<<< HEAD
+=======
+                  // Improved empty state with clearer call to action for reviews
+>>>>>>> 887bc7f (Finalize comments update)
                   if (reviews.isEmpty) {
                     return const EmptyState(
                       icon: Icons.rate_review_outlined,
@@ -1013,6 +1071,10 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                             children: [
                               _buildStarRow(review['rating']),
                               const SizedBox(height: 6),
+<<<<<<< HEAD
+=======
+                              // Divider between rating stars and comment text
+>>>>>>> 887bc7f (Finalize comments update)
                               const Divider(thickness: 1),
                               const SizedBox(height: 4),
                               Text(review['comment']),
@@ -1034,6 +1096,7 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
 // ================= ADD REVIEW =================
 
+// Screen where the user picks a star rating and writes a comment
 class AddReviewScreen extends StatefulWidget {
   final int restaurantId;
 
@@ -1046,7 +1109,7 @@ class AddReviewScreen extends StatefulWidget {
 class _AddReviewScreenState extends State<AddReviewScreen> {
   final _formKey = GlobalKey<FormState>();
   final _commentController = TextEditingController();
-  int _selectedRating = 5;
+  int _selectedRating = 5; // Default rating is 5 stars
 
   @override
   void dispose() {
@@ -1054,6 +1117,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     super.dispose();
   }
 
+  // Saves the review to the database and goes back
   Future<void> _saveReview() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -1072,6 +1136,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
     Navigator.pop(context);
   }
 
+  // Builds the interactive star row — tap a star to set the rating
   Widget _buildRatingSelector() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -1119,6 +1184,10 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
+<<<<<<< HEAD
+=======
+                  // Helper text guides user on how to use the star selector
+>>>>>>> 887bc7f (Finalize comments update)
                   const Text(
                     'Tap a star to set your rating',
                     style: TextStyle(color: Colors.black45, fontSize: 13),
@@ -1126,6 +1195,10 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                   const SizedBox(height: 8),
                   _buildRatingSelector(),
                   const SizedBox(height: 16),
+<<<<<<< HEAD
+=======
+                  // maxLength enables built-in character counter below the field
+>>>>>>> 887bc7f (Finalize comments update)
                   TextFormField(
                     controller: _commentController,
                     maxLines: 4,
@@ -1163,6 +1236,7 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
 
 // ================= FAVORITES =================
 
+// Shows all restaurants the user has saved as favorites
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
@@ -1176,6 +1250,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   void initState() {
     super.initState();
+    // Load favorites from the database when screen opens
     _favoritesFuture = DatabaseHelper.instance.getFavorites();
   }
 
@@ -1190,9 +1265,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             return Text('Favorites ($count)');
           },
         ),
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(24),
-          child: Padding(
+        // Subtitle gives context to the screen
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(24),
+          child: const Padding(
             padding: EdgeInsets.only(bottom: 8),
             child: Text(
               'Your saved restaurants',
@@ -1242,6 +1318,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
 // ================= BUDGET TRACKER =================
 
+// Shows spending history and progress toward the weekly budget goal
 class BudgetTrackerScreen extends StatefulWidget {
   const BudgetTrackerScreen({super.key});
 
@@ -1260,6 +1337,7 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
     _loadExpenses();
   }
 
+  // Loads all expenses and the current budget from storage
   Future<void> _loadExpenses() async {
     _expensesFuture = DatabaseHelper.instance.getExpenses();
     _total = await DatabaseHelper.instance.getTotalExpenses();
@@ -1268,6 +1346,7 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
     setState(() {});
   }
 
+  // Opens the add expense screen then refreshes the list
   Future<void> _goToAddExpense() async {
     await Navigator.push(
       context,
@@ -1284,6 +1363,7 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Budget Tracker')),
+      // Floating button to add a new expense
       floatingActionButton: FloatingActionButton(
         onPressed: _goToAddExpense,
         child: const Icon(Icons.add),
@@ -1292,6 +1372,7 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            // Budget progress summary card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -1327,6 +1408,7 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
             ),
             const SizedBox(height: 20),
             Expanded(
+              // Rebuild total spent every time state changes after deletion
               child: FutureBuilder<List<Map<String, dynamic>>>(
                 future: _expensesFuture,
                 builder: (context, snapshot) {
@@ -1364,9 +1446,14 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
                         ),
                         onDismissed: (_) async {
                           await DatabaseHelper.instance.deleteExpense(e['id']);
+<<<<<<< HEAD
                           await _loadExpenses();
 
+=======
+                          setState(() {}); // Trigger rebuild to update total
+>>>>>>> 887bc7f (Finalize comments update)
                           if (!mounted) return;
+                          // Notify user that expense was removed
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('${e['item']} removed')),
                           );
@@ -1398,6 +1485,7 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
 
 // ================= ADD EXPENSE =================
 
+// Screen to add a new food expense with item name and cost
 class AddExpenseScreen extends StatefulWidget {
   const AddExpenseScreen({super.key});
 
@@ -1417,6 +1505,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
     super.dispose();
   }
 
+  // Validates inputs and saves the expense to the database
   Future<void> _saveExpense() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -1449,6 +1538,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
               key: _formKey,
               child: Column(
                 children: [
+                  // Input for the name of the food item purchased
                   TextFormField(
                     controller: _itemController,
                     decoration: const InputDecoration(
@@ -1463,6 +1553,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
                     },
                   ),
                   const SizedBox(height: 16),
+                  // Input for the cost — only accepts valid positive numbers
                   TextFormField(
                     controller: _costController,
                     keyboardType: const TextInputType.numberWithOptions(
@@ -1507,6 +1598,7 @@ class _AddExpenseScreenState extends State<AddExpenseScreen> {
 
 // ================= SETTINGS =================
 
+// Lets the user set their weekly spending goal, saved to local storage
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -1524,6 +1616,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _loadCurrentBudget();
   }
 
+  // Pre-fills the input with the currently saved budget
   Future<void> _loadCurrentBudget() async {
     final budget = await AppSettings.getWeeklyBudget();
     _budgetController.text = budget.toStringAsFixed(2);
@@ -1537,6 +1630,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
+  // Validates and saves the new budget to local storage
   Future<void> _saveSettings() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -1567,6 +1661,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               key: _formKey,
               child: Column(
                 children: [
+<<<<<<< HEAD
+=======
+                  // Header with icon for the budget goal section
+>>>>>>> 887bc7f (Finalize comments update)
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Row(
@@ -1584,6 +1682,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  // Input for the user's weekly budget amount
                   TextFormField(
                     controller: _budgetController,
                     keyboardType: const TextInputType.numberWithOptions(
