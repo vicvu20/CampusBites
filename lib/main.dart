@@ -203,7 +203,7 @@ class HomeDashboardScreen extends StatefulWidget {
 class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   double _weeklyBudget = 100.0;
   double _totalSpent = 0.0;
-  
+
   // Stores the recommended restaurant to display on the dashboard
   Map<String, dynamic>? _recommendation;
 
@@ -222,7 +222,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     });
   }
 
-@override
+  @override
   void initState() {
     super.initState();
     _loadDashboardData();
@@ -295,7 +295,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     value: ratio,
                     minHeight: 12,
                     borderRadius: BorderRadius.circular(20),
-                    color: ratio >= 0.8 ? Colors.red : Colors.green, // Progress bar color changes to red when over 80% of budget used
+                    color: ratio >= 0.8 ? Colors.red : Colors.green,
                     backgroundColor: Colors.green.shade100,
                   ),
                   const SizedBox(height: 10),
@@ -336,7 +336,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             const SizedBox(height: 28),
             const SectionTitle("Recommended for You"),
             const SizedBox(height: 12),
-            //fallback message if none available
             _recommendation == null
                 ? const Card(
                     child: Padding(
@@ -346,13 +345,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   )
                 : Card(
                     child: Padding(
-                      padding: const EdgeInsets.all(18), // Increased padding for better spacing
+                      padding: const EdgeInsets.all(18),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Icon container for recommendation
                           Container(
-                            padding: const EdgeInsets.all(16), // Updated Icon
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
                               color: Colors.green.shade50,
                               borderRadius: BorderRadius.circular(14),
@@ -368,7 +366,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Display recommended restaurant name dynamically
                                 Text(
                                   _recommendation!['name'],
                                   style: const TextStyle(
@@ -377,7 +374,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Text('${_recommendation!['price']} • ${_recommendation!['type']}'),
+                                Text(
+                                  '${_recommendation!['price']} • ${_recommendation!['type']}',
+                                ),
                                 const SizedBox(height: 8),
                                 const Text(
                                   'Recommended because it is a budget-friendly option that fits your weekly spending goal.',
@@ -990,12 +989,12 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
                   final reviews = snapshot.data ?? [];
 
-                  // Improved empty state with clearer call to action for reviews (Update)
                   if (reviews.isEmpty) {
                     return const EmptyState(
                       icon: Icons.rate_review_outlined,
                       title: 'No reviews yet',
-                      subtitle: 'Tap "Add Review" above to share your experience with this restaurant.',
+                      subtitle:
+                          'Tap "Add Review" above to share your experience with this restaurant.',
                     );
                   }
 
@@ -1004,7 +1003,6 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                     itemBuilder: (_, i) {
                       final review = reviews[i];
 
-                      // Card styled with light color background for visual separation
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         color: Colors.green.shade50,
@@ -1015,7 +1013,6 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
                             children: [
                               _buildStarRow(review['rating']),
                               const SizedBox(height: 6),
-                              // Divider added for visual separation between rating and comment
                               const Divider(thickness: 1),
                               const SizedBox(height: 4),
                               Text(review['comment']),
@@ -1122,7 +1119,6 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  // Helper text guides user on how to interact with star selector
                   const Text(
                     'Tap a star to set your rating',
                     style: TextStyle(color: Colors.black45, fontSize: 13),
@@ -1130,7 +1126,6 @@ class _AddReviewScreenState extends State<AddReviewScreen> {
                   const SizedBox(height: 8),
                   _buildRatingSelector(),
                   const SizedBox(height: 16),
-                  // maxLength enables built-in character counter below the field (Update)
                   TextFormField(
                     controller: _commentController,
                     maxLines: 4,
@@ -1188,12 +1183,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // Title dynamically shows count of favorited restaurants
         title: FutureBuilder<List<Map<String, dynamic>>>(
           future: _favoritesFuture,
           builder: (context, snapshot) {
             final count = snapshot.data?.length ?? 0;
-            return Text('Favorites (${count})');
+            return Text('Favorites ($count)');
           },
         ),
         bottom: const PreferredSize(
@@ -1217,11 +1211,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           final favorites = snapshot.data ?? [];
 
           if (favorites.isEmpty) {
-            // Improved empty state with more helpful guidance for the user
             return const EmptyState(
               icon: Icons.favorite_border,
               title: 'No favorites yet',
-              subtitle: 'Browse the food list and tap a restaurant to save it as a favorite.',
+              subtitle:
+                  'Browse the food list and tap a restaurant to save it as a favorite.',
             );
           }
 
@@ -1235,7 +1229,6 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 child: ListTile(
                   leading: const Icon(Icons.favorite, color: Colors.red),
                   title: Text(r['name']),
-                  // Show cuisine and price as subtitle for quick reference
                   subtitle: Text('${r['type']} • ${r['price']}'),
                 ),
               );
@@ -1355,7 +1348,7 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
                     itemCount: expenses.length,
                     itemBuilder: (_, i) {
                       final e = expenses[i];
-                      // Wrap in Dismissible to enable swipe-to-delete
+
                       return Dismissible(
                         key: Key(e['id'].toString()),
                         direction: DismissDirection.endToStart,
@@ -1370,10 +1363,9 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
                           child: const Icon(Icons.delete, color: Colors.white),
                         ),
                         onDismissed: (_) async {
-                          // Delete expense from database on swipe
                           await DatabaseHelper.instance.deleteExpense(e['id']);
-                          setState(() {});
-                          // Notify user that expense was removed
+                          await _loadExpenses();
+
                           if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(content: Text('${e['item']} removed')),
@@ -1387,6 +1379,7 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
                               "\$${(e['cost'] as num).toStringAsFixed(2)}",
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -1395,7 +1388,7 @@ class _BudgetTrackerScreenState extends State<BudgetTrackerScreen> {
                   );
                 },
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -1574,7 +1567,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               key: _formKey,
               child: Column(
                 children: [
-                  // Header row with icon for weekly budget section
                   const Align(
                     alignment: Alignment.centerLeft,
                     child: Row(
