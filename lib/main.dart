@@ -1173,13 +1173,19 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Favorites'),
-        // Subtitle added to give context to the favorites screen
+        // Title dynamically shows count of favorited restaurants
+        title: FutureBuilder<List<Map<String, dynamic>>>(
+          future: _favoritesFuture,
+          builder: (context, snapshot) {
+            final count = snapshot.data?.length ?? 0;
+            return Text('Favorites (${count})');
+          },
+        ),
         bottom: const PreferredSize(
           preferredSize: Size.fromHeight(24),
           child: Padding(
             padding: EdgeInsets.only(bottom: 8),
-           child: Text(
+            child: Text(
               'Your saved restaurants',
               style: TextStyle(color: Colors.white70, fontSize: 13),
             ),
