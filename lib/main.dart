@@ -1512,14 +1512,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               key: _formKey,
               child: Column(
                 children: [
+                  // Header row with icon for weekly budget section
                   const Align(
                     alignment: Alignment.centerLeft,
-                    child: Text(
-                      'Weekly Budget Goal',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.savings, color: Colors.green),
+                        SizedBox(width: 8),
+                        Text(
+                          'Weekly Budget Goal',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16),
