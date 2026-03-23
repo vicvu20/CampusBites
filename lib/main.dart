@@ -1172,7 +1172,20 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Favorites')),
+      appBar: AppBar(
+        title: const Text('Favorites'),
+        // Subtitle added to give context to the favorites screen
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(24),
+          child: Padding(
+            padding: EdgeInsets.only(bottom: 8),
+           child: Text(
+              'Your saved restaurants',
+              style: TextStyle(color: Colors.white70, fontSize: 13),
+            ),
+          ),
+        ),
+      ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: _favoritesFuture,
         builder: (context, snapshot) {
@@ -1200,6 +1213,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 child: ListTile(
                   leading: const Icon(Icons.favorite, color: Colors.red),
                   title: Text(r['name']),
+                  // Show cuisine and price as subtitle for quick reference
                   subtitle: Text('${r['type']} • ${r['price']}'),
                 ),
               );
