@@ -990,11 +990,12 @@ class _RestaurantDetailsScreenState extends State<RestaurantDetailsScreen> {
 
                   final reviews = snapshot.data ?? [];
 
+                  // Improved empty state with clearer call to action for reviews (Update)
                   if (reviews.isEmpty) {
                     return const EmptyState(
-                      icon: Icons.reviews_outlined,
+                      icon: Icons.rate_review_outlined,
                       title: 'No reviews yet',
-                      subtitle: 'Be the first to leave a review for this place.',
+                      subtitle: 'Tap "Add Review" above to share your experience with this restaurant.',
                     );
                   }
 
